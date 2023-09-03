@@ -262,7 +262,7 @@ class OpalApp(QMainWindow):
     def post_message(self, message: str, sender: str = "user"):
         with self.mutex:
             if self.current_room not in self.chat_log:
-                self.chat_log[self.current_room] = []
+                self.chat_log[self.current_room] = [OPENAI_SYSTEM_MESSAGE]
             self.chat_log[self.current_room].append(
                 {"role": sender, "content": message}
             )
