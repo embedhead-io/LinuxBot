@@ -2,7 +2,7 @@ import os
 import openai
 
 from config import (
-    OPENAI_MODEL,
+    DEFAULT_MODEL,
     OPENAI_TEMPERATURE,
 )
 
@@ -13,7 +13,7 @@ def initialize_openai(api_key):
     openai.api_key = api_key
 
 
-def generate_text(chat_log: list, model: str = OPENAI_MODEL):
+def generate_text(chat_log: list, model: str = DEFAULT_MODEL):
     try:
         res = openai.ChatCompletion.create(
             model=model,
@@ -36,7 +36,7 @@ def append_to_chat_log(role: str, content: str, chat_log: list = []):
     return chat_log
 
 
-def bot(user_message: str, chat_log: list = [], model: str = OPENAI_MODEL):
+def bot(user_message: str, chat_log: list = [], model: str = DEFAULT_MODEL):
     if chat_log is None:
         chat_log = []
 

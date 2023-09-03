@@ -32,7 +32,7 @@ from PyQt5.QtWidgets import (
 )
 
 # --- Local Imports ---
-from config import OPENAI_MODELS
+from config import DEFAULT_MODEL, OPENAI_MODELS
 from utils import bot
 
 # --- Constants ---
@@ -42,7 +42,9 @@ ROOM_NEW_CHAT = "New Chat"
 class BotThread(QThread):
     new_message = pyqtSignal(str, str)
 
-    def __init__(self, user_message: str, chat_log: list, selected_model: str):
+    def __init__(
+        self, user_message: str, chat_log: list, selected_model: str = DEFAULT_MODEL
+    ):
         super().__init__()
         self.user_message = user_message
         self.chat_log = chat_log
