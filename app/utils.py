@@ -13,10 +13,10 @@ def initialize_openai(api_key):
     openai.api_key = api_key
 
 
-def generate_text(chat_log: list):
+def generate_text(chat_log: list, model: str = OPENAI_MODEL):
     try:
         res = openai.ChatCompletion.create(
-            model=OPENAI_MODEL,
+            model=model,
             messages=chat_log,
             temperature=OPENAI_TEMPERATURE,
         )
@@ -36,7 +36,7 @@ def append_to_chat_log(role: str, content: str, chat_log: list = []):
     return chat_log
 
 
-def bot(user_message: str, chat_log: list = []):
+def bot(user_message: str, chat_log: list = [], model: str = OPENAI_MODEL):
     if chat_log is None:
         chat_log = []
 
@@ -46,7 +46,7 @@ def bot(user_message: str, chat_log: list = []):
         chat_log=chat_log,
     )
 
-    ans, err = generate_text(chat_log)
+    ans, err = generate_text(chat_log, model)
     if err:
         return err
 

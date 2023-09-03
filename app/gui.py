@@ -28,9 +28,11 @@ from PyQt5.QtWidgets import (
     QAction,
     QDesktopWidget,
     QDialog,
+    QComboBox,
 )
 
 # --- Local Imports ---
+from config import OPENAI_MODELS
 from utils import bot
 
 # --- Constants ---
@@ -40,16 +42,17 @@ ROOM_NEW_CHAT = "New Chat"
 class BotThread(QThread):
     new_message = pyqtSignal(str, str)
 
-    def __init__(self, user_message: str, chat_log: list):
+    def __init__(self, user_message: str, chat_log: list, selected_model: str):
         super().__init__()
         self.user_message = user_message
         self.chat_log = chat_log
+        self.selected_model = selected_model
         self.mutex = threading.Lock()
 
     def run(self):
         try:
             with self.mutex:
-                ans = bot(self.user_message, self.chat_log)
+                ans = bot(self.user_message, self.chat_log, self.selected_model)
             self.new_message.emit(ans, "assistant")
         except Exception as e:
             print(f"BotThread error: {e}")
@@ -103,6 +106,8 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget = QListWidget()
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_input = QLineEdit()
+        self.model_selector = QComboBox()
+        self.model_selector.addItems(OPENAI_MODELS)
         self.new_chat_button = QPushButton("New Chat")
         self.rename_chat_button = QPushButton("Rename Chat")
         self.scrollbar = self.chat_log_display.verticalScrollBar()
@@ -124,6 +129,7 @@ class OpalApp(QMainWindow):
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.toggle_button)
         self.left_layout.addWidget(self.rooms_list_widget)
+        self.left_layout.addWidget(self.model_selector)
         self.left_layout.addWidget(self.new_chat_button)
         self.left_layout.addWidget(self.rename_chat_button)
 
@@ -163,11 +169,15 @@ class OpalApp(QMainWindow):
         self.status_label.setText("Status: Typing...")
         self.post_message(user_message, "user")
 
+        selected_model = self.model_selector.currentText()
+
         with self.mutex:
             if self.current_room not in self.chat_log:
                 self.chat_log[self.current_room] = []
 
-            self.bot_thread = BotThread(user_message, self.chat_log[self.current_room])
+            self.bot_thread = BotThread(
+                user_message, self.chat_log[self.current_room], selected_model
+            )
             self.bot_thread.new_message.connect(self.post_message)
             self.bot_thread.finished.connect(self.reset_status)
             self.bot_thread.start()
