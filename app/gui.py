@@ -439,6 +439,12 @@ class OpalApp(QMainWindow):
                 del self.chat_log[current_item.text()]
                 self.switch_room("(New Chat)")
 
+            chat_log_path = os.path.join(
+                self.CHAT_LOG_DIR, f"{current_item.text()}.json"
+            )
+            if os.path.exists(chat_log_path):
+                os.remove(chat_log_path)
+
     def load_chat_history(self):
         if not os.path.exists(self.CHAT_LOG_DIR):
             return
