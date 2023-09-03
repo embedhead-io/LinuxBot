@@ -21,7 +21,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QShortcut,
     QListWidget,
-    QListWidgetItem,
     QMenu,
     QAction,
     QDesktopWidget,
@@ -166,6 +165,7 @@ class OpalApp(QMainWindow):
         if not user_message:
             return
 
+        self.status_label.setText("Status: Typing...")
         self.post_message(user_message, "user")
 
         with self.mutex:
@@ -174,6 +174,7 @@ class OpalApp(QMainWindow):
 
             self.bot_thread = BotThread(user_message, self.chat_log[self.current_room])
             self.bot_thread.new_message.connect(self.post_message)
+            self.bot_thread.finished.connect(self.reset_status)
             self.bot_thread.start()
 
     def post_message(self, message: str, sender: str = "user"):
@@ -187,8 +188,11 @@ class OpalApp(QMainWindow):
         self.save_chat_history()
         self.update_ui(message, sender)
 
+    def reset_status(self):
+        self.status_label.setText("Status: Ready")
+
     def update_ui(self, message: str, sender: str):
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.datetime.now().strftime("%I:%M %p")
 
         cursor = self.chat_log_display.textCursor()
         block_format = QTextBlockFormat()
@@ -205,7 +209,7 @@ class OpalApp(QMainWindow):
             char_format.setBackground(QColor("#ffcccc"))
 
         cursor.insertBlock(block_format, char_format)
-        cursor.insertText(f"{prefix}{message} ({now})")
+        cursor.insertText(f"[{now}] {prefix}{message}")
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
@@ -215,16 +219,13 @@ class OpalApp(QMainWindow):
         if room_name:
             self.save_chat_history()
             self.current_room = room_name
-            self.setWindowTitle(
-                f"Opal - {self.current_room}"
-            )  # Update window title here
+            self.setWindowTitle(f"Opal - {self.current_room}")
             self.chat_log_display.clear()
             self.load_chat_history()
 
             for entry in self.chat_log.get(self.current_room, []):
                 self.update_ui(entry["content"], entry["role"])
 
-            # Find the index of the room_name and set it as the current row.
             items = [
                 self.rooms_list_widget.item(i).text()
                 for i in range(self.rooms_list_widget.count())
