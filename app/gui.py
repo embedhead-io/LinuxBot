@@ -36,6 +36,7 @@ from PyQt5.QtWidgets import (
 from config import (
     DEFAULT_MODEL,
     OPENAI_MODELS,
+    OPENAI_SYSTEM_MESSAGE,
 )
 from utils import bot
 
@@ -511,12 +512,7 @@ class OpalApp(QMainWindow):
                     with open(chat_log_path, "r") as f:
                         existing_chat_log = json.load(f)
                 else:
-                    existing_chat_log = [
-                        {
-                            "role": "system",
-                            "content": "You are a helpful assistant named Opal.",
-                        }
-                    ]
+                    existing_chat_log = [OPENAI_SYSTEM_MESSAGE]
 
                 # Update chat log with new message for the current room
                 existing_chat_log.append(new_message)
@@ -534,3 +530,10 @@ class OpalApp(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
         self.chat_input.setFocus()
+
+    def closeEvent(self, event):
+        if self.current_room == "(New Chat)":
+            file_path = os.path.join(self.CHAT_LOG_DIR, f"{self.current_room}.json")
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        event.accept()
