@@ -75,6 +75,9 @@ class OpalApp(QMainWindow):
         self.connect_signals()
         self.setCentralWidget(self.main_widget)
 
+        new_chat_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
+        new_chat_shortcut.activated.connect(self.create_new_room)
+
         quit_shortcut = QShortcut(QKeySequence("Esc"), self)
         quit_shortcut.activated.connect(self.close)
 
