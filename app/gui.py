@@ -1,5 +1,6 @@
 # --- Standard Library Imports ---
 import json
+import os
 import threading
 from plyer import notification
 
@@ -34,6 +35,7 @@ from PyQt5.QtWidgets import (
 
 # --- Local Imports ---
 from config import (
+    CHAT_LOG_PATH,
     DEFAULT_MODEL,
     OPENAI_MODELS,
 )
@@ -86,8 +88,10 @@ class OpalApp(QMainWindow):
         )  # New dictionary to hold BotThread instances per room
         self.chat_log = {}
         self.current_room = "New Chat"
+        self.CHAT_LOG_DIR = "chat_logs"
         self.init_ui()
         self.load_chat_history()
+        self.apply_ui_settings()
 
     def init_ui(self):
         self.setWindowTitle("Opal")
@@ -105,6 +109,7 @@ class OpalApp(QMainWindow):
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
+    def apply_ui_settings(self):
         if hide_side_on_start:
             self.rooms_list_widget.hide()
             self.new_chat_button.hide()
@@ -251,7 +256,7 @@ class OpalApp(QMainWindow):
                 {"role": sender, "content": message}
             )
 
-        self.save_chat_history()
+        self.save_chat_history(self.current_room, {"role": sender, "content": message})
         self.update_ui(message, sender)
 
     def reset_status(self):
@@ -298,21 +303,39 @@ class OpalApp(QMainWindow):
                     self.chat_log[new_name] = self.chat_log.pop(old_name, [])
                     self.switch_room(new_name)
 
+                    # Rename the chat log file
+                    old_chat_log_path = os.path.join(
+                        self.CHAT_LOG_DIR, f"{old_name}.json"
+                    )
+
+                    # Copy the contents of the old chat log file to the new one
+                    with open(old_chat_log_path, "r") as f:
+                        old_chat_log = json.load(f)
+                        with open(
+                            os.path.join(self.CHAT_LOG_DIR, f"{new_name}.json"), "w"
+                        ) as f:
+                            json.dump(old_chat_log, f)
+
+                    # Delete the old chat log file
+                    if os.path.exists(old_chat_log_path):
+                        os.remove(old_chat_log_path)
+
     def switch_room(self, room_name: str, update_ui: bool = True):
         if room_name:
-            self.save_chat_history()
             self.current_room = room_name
-            self.setWindowTitle(f"Opal - {self.current_room}")
+            self.setWindowTitle(f"{self.current_room}")
 
             if update_ui:
                 self.chat_log_display.clear()
-                displayed_messages = (
-                    set()
-                )  # Add this line to keep track of displayed messages
+                displayed_messages = set()  # To keep track of displayed messages
                 if room_name in self.chat_log:
                     for log in self.chat_log[room_name]:
                         message_key = f"{log['content']}{log['role']}"
-                        if message_key not in displayed_messages:  # Add this check
+                        # If the message hasn't been displayed yet and the role isn't system
+                        if (
+                            message_key not in displayed_messages
+                            and log["role"] != "system"
+                        ):  # Check for duplicates
                             self.update_ui(log["content"], log["role"])
                             displayed_messages.add(
                                 message_key
@@ -410,21 +433,51 @@ class OpalApp(QMainWindow):
                 self.switch_room("New Chat")
 
     def load_chat_history(self):
-        try:
-            with open("chat_history.json", "r") as f:
-                self.chat_log = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError, Exception):
-            pass
+        if not os.path.exists(self.CHAT_LOG_DIR):
+            return
 
-    def save_chat_history(self):
-        with self.mutex:
-            empty_rooms = [room for room, logs in self.chat_log.items() if not logs]
-            for room in empty_rooms:
-                del self.chat_log[room]
+        for filename in os.listdir(self.CHAT_LOG_DIR):
+            room_name = filename.rsplit(".", 1)[0]
+            self.rooms_list_widget.addItem(room_name)
 
+            chat_log_path = os.path.join(self.CHAT_LOG_DIR, filename)
             try:
-                with open("chat_history.json", "w") as f:
-                    json.dump(self.chat_log, f)
+                with open(chat_log_path, "r") as f:
+                    self.chat_log[room_name] = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError, Exception):
+                pass
+
+        self.switch_room("New Chat")
+
+    def save_chat_history(self, room, new_message):
+        # Generate room-specific chat log path
+        chat_log_path = os.path.join(self.CHAT_LOG_DIR, f"{room}.json")
+
+        with self.mutex:
+            try:
+                # Create directory if it doesn't exist
+                if not os.path.exists(self.CHAT_LOG_DIR):
+                    os.makedirs(self.CHAT_LOG_DIR)
+
+                # Load existing chat history if available
+                if os.path.exists(chat_log_path):
+                    with open(chat_log_path, "r") as f:
+                        existing_chat_log = json.load(f)
+                else:
+                    existing_chat_log = [
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant named Opal.",
+                        }
+                    ]
+
+                # Update chat log with new message for the current room
+                existing_chat_log.append(new_message)
+
+                # Save updated chat log
+                with open(chat_log_path, "w") as f:
+                    json.dump(existing_chat_log, f)
+
             except Exception as e:
                 print(f"Error saving chat history: {e}")
 

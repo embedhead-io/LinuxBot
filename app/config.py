@@ -21,3 +21,6 @@ DEFAULT_MODEL = FAST_MODEL
 # OpenAI Configurations
 OPENAI_RETRY_LIMIT = 3
 OPENAI_TEMPERATURE = 0.7
+
+# Chat Log Path
+CHAT_LOG_PATH = "chat_history.json"
