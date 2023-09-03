@@ -81,7 +81,7 @@ class OpalApp(QMainWindow):
         ctrl_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         ctrl_tab_shortcut.activated.connect(self.cycle_through_rooms)
 
-        collapse_shortcut = QShortcut(QKeySequence("Ctrl+Left"), self)
+        collapse_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
         collapse_shortcut.activated.connect(self.toggle_left_panel)
 
         quit_shortcut = QShortcut(QKeySequence("Esc"), self)
