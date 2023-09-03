@@ -35,7 +35,6 @@ from PyQt5.QtWidgets import (
 
 # --- Local Imports ---
 from config import (
-    CHAT_LOG_PATH,
     DEFAULT_MODEL,
     OPENAI_MODELS,
 )
@@ -45,7 +44,7 @@ from utils import bot
 ROOM_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
-hide_side_on_start = True
+hide_side_on_start = False
 
 
 class BotThread(QThread):
