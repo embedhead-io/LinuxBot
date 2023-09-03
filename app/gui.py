@@ -38,6 +38,7 @@ from utils import bot
 
 # --- Constants ---
 ROOM_NEW_CHAT = "New Chat"
+hide_side_panel = False
 
 
 class BotThread(QThread):
@@ -99,12 +100,12 @@ class OpalApp(QMainWindow):
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
-        # Hide the left panel widgets when the application starts
-        self.rooms_list_widget.hide()
-        self.new_chat_button.hide()
-        self.rename_chat_button.hide()
-        self.model_selector.hide()  # Add this line if you also want to hide the model selector
-        self.toggle_button.setText(">")
+        if hide_side_panel:
+            self.rooms_list_widget.hide()
+            self.new_chat_button.hide()
+            self.rename_chat_button.hide()
+            self.model_selector.hide()  # Add this line if you also want to hide the model selector
+            self.toggle_button.setText(">")
 
     def create_shortcuts(self):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
@@ -347,7 +348,6 @@ class OpalApp(QMainWindow):
     def update_ui(self, message: str, sender: str):
         cursor = self.chat_log_display.textCursor()
 
-        # Create a new frame format
         frame_format = QTextFrameFormat()
         frame_format.setPadding(5)
         frame_format.setBorder(1)
@@ -359,23 +359,19 @@ class OpalApp(QMainWindow):
             frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
         else:
             frame_format.setBackground(
-                QColor.fromRgb(240, 240, 240, 255)
+                QColor.fromRgb(246, 245, 244, 255)
             )  # Gray for bot
-            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 75))
+            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 65))
 
-        # Create a frame using the format
         cursor.insertFrame(frame_format)
 
-        # Char Format for controlling the appearance of the text
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
 
-        # Insert the text itself
         prefix = "You: " if sender == "user" else "Opal: "
         cursor.setCharFormat(char_format)
         cursor.insertText(f"{prefix}{message}")
 
-        # Ensure the latest message is visible
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
