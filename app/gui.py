@@ -33,12 +33,17 @@ from PyQt5.QtWidgets import (
 )
 
 # --- Local Imports ---
-from config import DEFAULT_MODEL, OPENAI_MODELS
+from config import (
+    FAST_MODEL,
+    SLOW_MODEL,
+    OPENAI_MODELS,
+)
 from utils import bot
 
 # --- Constants ---
 ROOM_NEW_CHAT = "New Chat"
-hide_side_widgets = True
+DEFAULT_MODEL = FAST_MODEL
+hide_side_on_start = True
 
 
 class BotThread(QThread):
@@ -100,7 +105,7 @@ class OpalApp(QMainWindow):
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
-        if hide_side_widgets:
+        if hide_side_on_start:
             self.rooms_list_widget.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
