@@ -143,6 +143,7 @@ class OpalApp(QMainWindow):
 
         self.chat_input = QLineEdit()
         self.chat_input.setFont(font)
+        self.chat_input.setFixedHeight(30)
 
         self.model_selector = QComboBox()
         self.model_selector.setFont(font)
@@ -388,14 +389,38 @@ class OpalApp(QMainWindow):
         frame_format.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
         if sender == "user":
             frame_format.setBackground(
-                QColor.fromRgb(255, 255, 255, 255)
-            )  # White for user
-            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
+                QColor.fromRgb(
+                    245,
+                    250,
+                    255,
+                    255,
+                )
+            )
+            frame_format.setBorderBrush(
+                QColor.fromRgb(
+                    0,
+                    0,
+                    0,
+                    50,
+                )
+            )
         else:
             frame_format.setBackground(
-                QColor.fromRgb(240, 240, 240, 255)
-            )  # Gray for bot
-            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 65))
+                QColor.fromRgb(
+                    210,
+                    230,
+                    255,
+                    255,
+                )
+            )
+            frame_format.setBorderBrush(
+                QColor.fromRgb(
+                    0,
+                    0,
+                    0,
+                    65,
+                )
+            )
 
         cursor.insertFrame(frame_format)
 
