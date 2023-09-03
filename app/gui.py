@@ -78,6 +78,9 @@ class OpalApp(QMainWindow):
         new_chat_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
         new_chat_shortcut.activated.connect(self.create_new_room)
 
+        ctrl_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
+        ctrl_tab_shortcut.activated.connect(self.cycle_through_rooms)
+
         quit_shortcut = QShortcut(QKeySequence("Esc"), self)
         quit_shortcut.activated.connect(self.close)
 
@@ -227,6 +230,13 @@ class OpalApp(QMainWindow):
                     )  # You can choose your own color
                 else:
                     item.setBackground(QColor("#ffffff"))  # Reset to white background
+
+    def cycle_through_rooms(self):
+        current_row = self.rooms_list_widget.currentRow()
+        next_row = (current_row + 1) % self.rooms_list_widget.count()
+        self.rooms_list_widget.setCurrentRow(next_row)
+        new_item = self.rooms_list_widget.item(next_row)
+        self.switch_room(new_item.text())
 
     def save_chat_history(self):
         with self.mutex:
