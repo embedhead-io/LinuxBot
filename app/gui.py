@@ -1,5 +1,6 @@
 # --- Standard Library Imports ---
 import json
+import subprocess
 import threading
 
 # --- Third-party Imports ---
@@ -378,6 +379,9 @@ class OpalApp(QMainWindow):
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
+
+        if sender != "user":
+            subprocess.run(["notify-send", "New Message from Opal", message])
 
     def show_room_context_menu(self, position):
         context_menu = QMenu()
