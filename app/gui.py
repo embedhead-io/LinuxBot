@@ -1,6 +1,9 @@
+# --- Standard Library Imports ---
 import datetime
 import json
 import threading
+
+# --- Third-party Imports ---
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
     QTextCursor,
@@ -26,7 +29,12 @@ from PyQt5.QtWidgets import (
     QDesktopWidget,
     QDialog,
 )
+
+# --- Local Imports ---
 from utils import bot
+
+# --- Constants ---
+ROOM_NEW_CHAT = "New Chat"
 
 
 class BotThread(QThread):
@@ -70,30 +78,25 @@ class OpalApp(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("Opal")
         self.setGeometry(50, 50, 700, 500)
+
+        self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
         self.connect_signals()
         self.setCentralWidget(self.main_widget)
-
-        new_chat_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
-        new_chat_shortcut.activated.connect(self.create_new_chat)
-
-        rename_chat_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
-        rename_chat_shortcut.activated.connect(self.rename_current_chat)
-
-        ctrl_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
-        ctrl_tab_shortcut.activated.connect(self.cycle_through_rooms)
-
-        collapse_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
-        collapse_shortcut.activated.connect(self.toggle_left_panel)
-
-        quit_shortcut_esc = QShortcut(QKeySequence("Esc"), self)
-        quit_shortcut_esc.activated.connect(self.close)
-
-        quit_shortcut_ctrl_q = QShortcut(QKeySequence("Ctrl+Q"), self)
-        quit_shortcut_ctrl_q.activated.connect(self.close)
-
         self.switch_room(self.current_room)
+
+    def create_shortcuts(self):
+        self.create_shortcut("Ctrl+N", self.create_new_chat)
+        self.create_shortcut("Ctrl+R", self.rename_current_chat)
+        self.create_shortcut("Ctrl+Tab", self.cycle_through_rooms)
+        self.create_shortcut("Ctrl+J", self.toggle_left_panel)
+        self.create_shortcut("Esc", self.close)
+        self.create_shortcut("Ctrl+Q", self.close)
+
+    def create_shortcut(self, key_sequence: str, func):
+        shortcut = QShortcut(QKeySequence(key_sequence), self)
+        shortcut.activated.connect(func)
 
     def create_widgets(self):
         self.toggle_button = QPushButton("<")
@@ -244,7 +247,7 @@ class OpalApp(QMainWindow):
         self.status_label.setText("Status: Ready")
 
     def update_ui(self, message: str, sender: str):
-        now = datetime.datetime.now().strftime("%I:%M %p")
+        now = datetime.datetime.now().strftime("%I:%M %p")  # timestamp
 
         cursor = self.chat_log_display.textCursor()
         block_format = QTextBlockFormat()
@@ -261,7 +264,7 @@ class OpalApp(QMainWindow):
             char_format.setBackground(QColor("#ffcccc"))
 
         cursor.insertBlock(block_format, char_format)
-        cursor.insertText(f"[{now}] {prefix}{message}")
+        cursor.insertText(f"{prefix}{message}")  # no timestamp
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
