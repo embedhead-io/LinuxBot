@@ -6,8 +6,8 @@ import threading
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
     QTextCursor,
-    QTextBlockFormat,
     QTextCharFormat,
+    QTextFrameFormat,
     QColor,
     QKeySequence,
     QFont,
@@ -84,7 +84,7 @@ class OpalApp(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("Opal")
-        self.setGeometry(50, 50, 700, 500)
+        self.setGeometry(50, 50, 825, 700)
 
         self.create_shortcuts()
         self.create_widgets()
@@ -346,28 +346,32 @@ class OpalApp(QMainWindow):
     def update_ui(self, message: str, sender: str):
         cursor = self.chat_log_display.textCursor()
 
-        # Block Format for controlling the box around each message
-        block_format = QTextBlockFormat()
-        block_format.setTopMargin(5)
-        block_format.setBottomMargin(5)
+        # Create a new frame format
+        frame_format = QTextFrameFormat()
+        frame_format.setPadding(5)
+        frame_format.setBorder(1)
+        frame_format.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
+        if sender == "user":
+            frame_format.setBackground(
+                QColor.fromRgb(255, 255, 255, 255)
+            )  # White for user
+            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
+        else:
+            frame_format.setBackground(
+                QColor.fromRgb(240, 240, 240, 255)
+            )  # Gray for bot
+            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 75))
+
+        # Create a frame using the format
+        cursor.insertFrame(frame_format)
 
         # Char Format for controlling the appearance of the text
         char_format = QTextCharFormat()
-        char_format.setFontPointSize(10)  # Font size set to 10
-        if sender == "user":
-            char_format.setBackground(QColor("#FFFFFF"))  # White for user
-        else:
-            char_format.setBackground(
-                QColor("#F0F0F0")
-            )  # Very light grey for assistant
-
-        # Move to the end of the existing text and insert a new block for the message
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertBlock(block_format)
+        char_format.setFontPointSize(10)
 
         # Insert the text itself
-        cursor.setCharFormat(char_format)
         prefix = "You: " if sender == "user" else "Opal: "
+        cursor.setCharFormat(char_format)
         cursor.insertText(f"{prefix}{message}")
 
         # Ensure the latest message is visible
