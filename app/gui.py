@@ -1,7 +1,7 @@
 # --- Standard Library Imports ---
 import json
-import subprocess
 import threading
+from plyer import notification
 
 # --- Third-party Imports ---
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
@@ -381,7 +381,12 @@ class OpalApp(QMainWindow):
         self.scrollbar.setValue(self.scrollbar.maximum())
 
         if sender != "user" and not self.isActiveWindow():
-            subprocess.run(["notify-send", "New Message from Opal", message])
+            notification.notify(
+                title="New Message from Opal",
+                message=message,
+                app_name="Your App Name",
+                timeout=10,
+            )
 
     def show_room_context_menu(self, position):
         context_menu = QMenu()
