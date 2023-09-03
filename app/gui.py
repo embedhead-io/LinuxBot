@@ -44,7 +44,7 @@ from utils import bot
 ROOM_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
-hide_side_on_start = False
+hide_side_on_start = True
 
 
 class BotThread(QThread):
@@ -124,7 +124,7 @@ class OpalApp(QMainWindow):
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
         self.create_shortcut("Ctrl+D", self.delete_current_room)
         self.create_shortcut("Ctrl+Tab", self.cycle_through_rooms)
-        self.create_shortcut("Ctrl+J", self.toggle_left_panel)
+        self.create_shortcut("Ctrl+1", self.toggle_left_panel)
         self.create_shortcut("Esc", self.close)
         self.create_shortcut("Ctrl+Q", self.close)
 
