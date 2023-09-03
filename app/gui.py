@@ -2,13 +2,31 @@ import datetime
 import json
 import threading
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QTextCursor, QTextBlockFormat, QTextCharFormat, QColor, QKeySequence
+from PyQt5.QtGui import (
+    QTextCursor,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QColor,
+    QKeySequence,
+)
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QLineEdit, QPushButton, QLabel, QShortcut,
-    QListWidget, QListWidgetItem, QMenu, QAction
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTextEdit,
+    QLineEdit,
+    QPushButton,
+    QLabel,
+    QShortcut,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
+    QAction,
 )
 from utils import bot
+
 
 class BotThread(QThread):
     new_message = pyqtSignal(str, str)
@@ -27,6 +45,7 @@ class BotThread(QThread):
         except Exception as e:
             print(f"BotThread error: {e}")
 
+
 class StatusLabel(QLabel):
     def __init__(self):
         super().__init__()
@@ -35,6 +54,7 @@ class StatusLabel(QLabel):
     def init_ui(self):
         self.setText("Status: Ready")
         self.setAlignment(Qt.AlignCenter)
+
 
 class OpalApp(QMainWindow):
     def __init__(self):
@@ -71,7 +91,9 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget.setCurrentRow(0)
 
         self.rooms_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.rooms_list_widget.customContextMenuRequested.connect(self.show_room_context_menu)
+        self.rooms_list_widget.customContextMenuRequested.connect(
+            self.show_room_context_menu
+        )
 
     def create_layouts(self):
         self.left_layout = QVBoxLayout()
@@ -95,7 +117,11 @@ class OpalApp(QMainWindow):
         self.toggle_button.clicked.connect(self.toggle_left_panel)
         self.send_button.clicked.connect(self.send_message)
         self.chat_input.returnPressed.connect(self.send_message)
-        self.rooms_list_widget.currentItemChanged.connect(lambda new_item, _: self.switch_room(new_item.text() if new_item else "General"))
+        self.rooms_list_widget.currentItemChanged.connect(
+            lambda new_item, _: self.switch_room(
+                new_item.text() if new_item else "General"
+            )
+        )
 
     def toggle_left_panel(self):
         self.rooms_list_widget.setHidden(not self.rooms_list_widget.isHidden())
@@ -123,7 +149,9 @@ class OpalApp(QMainWindow):
         with self.mutex:
             if self.current_room not in self.chat_log:
                 self.chat_log[self.current_room] = []
-            self.chat_log[self.current_room].append({"sender": sender, "message": message})
+            self.chat_log[self.current_room].append(
+                {"role": sender, "content": message}
+            )
 
         self.save_chat_history()
         self.update_ui(message, sender)
@@ -159,7 +187,7 @@ class OpalApp(QMainWindow):
             self.load_chat_history()
 
             for entry in self.chat_log.get(self.current_room, []):
-                self.update_ui(entry["message"], entry["sender"])
+                self.update_ui(entry["content"], entry["role"])
 
     def save_chat_history(self):
         with self.mutex:
@@ -194,10 +222,10 @@ class OpalApp(QMainWindow):
             self.rooms_list_widget.takeItem(self.rooms_list_widget.row(current_item))
             if current_item.text() in self.chat_log:
                 del self.chat_log[current_item.text()]
-                self.switch_room(“General”)
+                self.switch_room("General")
 
 
-if __name__ == “__main__”:
+if __name__ == "__main__":
     app = QApplication([])
     window = OpalApp()
     window.show()

@@ -59,4 +59,4 @@ def bot(user_message: str, chat_log: list = []):
 
 
 # Initialize OpenAI API key
-initialize_openai(os.environ.get('OPENAI_API_KEY'))
+initialize_openai(os.environ.get("OPENAI_API_KEY"))
