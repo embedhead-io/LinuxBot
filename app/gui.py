@@ -82,9 +82,7 @@ class OpalApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.mutex = threading.Lock()
-        self.bot_thread_per_room = (
-            {}
-        )  # New dictionary to hold BotThread instances per room
+        self.bot_thread_per_room = {}
         self.chat_log = {}
         self.current_room = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
@@ -97,8 +95,8 @@ class OpalApp(QMainWindow):
         self.setGeometry(
             50,
             50,
-            925,
-            825,
+            875,
+            725,
         )
 
         self.create_shortcuts()
@@ -108,7 +106,6 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.switch_room(self.current_room)
 
-        # Set the default model from DEFAULT_MODEL in the ComboBox
         index = self.model_selector.findText(DEFAULT_MODEL, Qt.MatchFixedString)
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
@@ -125,6 +122,7 @@ class OpalApp(QMainWindow):
     def create_shortcuts(self):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
+        self.create_shortcut("Ctrl+D", self.delete_current_room)
         self.create_shortcut("Ctrl+Tab", self.cycle_through_rooms)
         self.create_shortcut("Ctrl+J", self.toggle_left_panel)
         self.create_shortcut("Esc", self.close)
@@ -235,7 +233,6 @@ class OpalApp(QMainWindow):
             if self.current_room not in self.chat_log:
                 self.chat_log[self.current_room] = []
 
-            # Create a new BotThread if not already created for this room
             if self.current_room not in self.bot_thread_per_room:
                 self.bot_thread_per_room[self.current_room] = BotThread(
                     user_message, self.chat_log[self.current_room], selected_model
@@ -248,7 +245,6 @@ class OpalApp(QMainWindow):
                 )
 
             else:
-                # Update the existing BotThread's information for this room
                 self.bot_thread_per_room[self.current_room].user_message = user_message
                 self.bot_thread_per_room[self.current_room].chat_log = self.chat_log[
                     self.current_room
@@ -314,12 +310,10 @@ class OpalApp(QMainWindow):
                     self.chat_log[new_name] = self.chat_log.pop(old_name, [])
                     self.switch_room(new_name)
 
-                    # Rename the chat log file
                     old_chat_log_path = os.path.join(
                         self.CHAT_LOG_DIR, f"{old_name}.json"
                     )
 
-                    # Copy the contents of the old chat log file to the new one
                     with open(old_chat_log_path, "r") as f:
                         old_chat_log = json.load(f)
                         with open(
@@ -327,7 +321,6 @@ class OpalApp(QMainWindow):
                         ) as f:
                             json.dump(old_chat_log, f)
 
-                    # Delete the old chat log file
                     if os.path.exists(old_chat_log_path):
                         os.remove(old_chat_log_path)
 
@@ -342,11 +335,10 @@ class OpalApp(QMainWindow):
                 if room_name in self.chat_log:
                     for log in self.chat_log[room_name]:
                         message_key = f"{log['content']}{log['role']}"
-                        # If the message hasn't been displayed yet and the role isn't system
                         if (
                             message_key not in displayed_messages
                             and log["role"] != "system"
-                        ):  # Check for duplicates
+                        ):
                             self.update_ui(log["content"], log["role"])
                             displayed_messages.add(
                                 message_key
@@ -432,15 +424,15 @@ class OpalApp(QMainWindow):
 
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
-        char_format.setFontWeight(QFont.Bold)  # Set the font weight to Bold
+        char_format.setFontWeight(QFont.Bold)
 
         prefix = "Me: " if sender == "user" else "Opal: "
         cursor.setCharFormat(char_format)
-        cursor.insertText(prefix)  # Insert the bolded prefix
+        cursor.insertText(prefix)
 
-        char_format.setFontWeight(QFont.Normal)  # Reset the font weight to Normal
+        char_format.setFontWeight(QFont.Normal)
         cursor.setCharFormat(char_format)
-        cursor.insertText(f"{message}")  # Insert the non-bolded message
+        cursor.insertText(f"{message}")
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
@@ -498,26 +490,21 @@ class OpalApp(QMainWindow):
         self.switch_room("(New Chat)")
 
     def save_chat_history(self, room, new_message):
-        # Generate room-specific chat log path
         chat_log_path = os.path.join(self.CHAT_LOG_DIR, f"{room}.json")
 
         with self.mutex:
             try:
-                # Create directory if it doesn't exist
                 if not os.path.exists(self.CHAT_LOG_DIR):
                     os.makedirs(self.CHAT_LOG_DIR)
 
-                # Load existing chat history if available
                 if os.path.exists(chat_log_path):
                     with open(chat_log_path, "r") as f:
                         existing_chat_log = json.load(f)
                 else:
                     existing_chat_log = [OPENAI_SYSTEM_MESSAGE]
 
-                # Update chat log with new message for the current room
                 existing_chat_log.append(new_message)
 
-                # Save updated chat log
                 with open(chat_log_path, "w") as f:
                     json.dump(existing_chat_log, f)
 
