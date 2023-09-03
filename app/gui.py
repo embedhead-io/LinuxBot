@@ -152,6 +152,40 @@ class OpalApp(QMainWindow):
             )
         )
 
+    @pyqtSlot()
+    def send_message(self):
+        user_message = self.chat_input.text().strip()
+        self.chat_input.clear()
+
+        if not user_message:
+            return
+
+        self.status_label.setText("Status: Typing...")
+        self.post_message(user_message, "user")
+
+        with self.mutex:
+            if self.current_room not in self.chat_log:
+                self.chat_log[self.current_room] = []
+
+            self.bot_thread = BotThread(user_message, self.chat_log[self.current_room])
+            self.bot_thread.new_message.connect(self.post_message)
+            self.bot_thread.finished.connect(self.reset_status)
+            self.bot_thread.start()
+
+    def post_message(self, message: str, sender: str = "user"):
+        with self.mutex:
+            if self.current_room not in self.chat_log:
+                self.chat_log[self.current_room] = []
+            self.chat_log[self.current_room].append(
+                {"role": sender, "content": message}
+            )
+
+        self.save_chat_history()
+        self.update_ui(message, sender)
+
+    def reset_status(self):
+        self.status_label.setText("Status: Ready")
+
     def create_new_chat(self):
         room_name = "New Chat " + str(len(self.chat_log) + 1)
         self.rooms_list_widget.addItem(room_name)
@@ -193,12 +227,12 @@ class OpalApp(QMainWindow):
                     self.chat_log[new_name] = self.chat_log.pop(old_name, [])
                     self.switch_room(new_name)
 
-    def showEvent(self, event):
-        screen_geometry = QDesktopWidget().availableGeometry()
-        x = (screen_geometry.width() - self.width()) // 2
-        y = (screen_geometry.height() - self.height()) // 2
-        self.move(x, y)
-        self.chat_input.setFocus()
+    def cycle_through_rooms(self):
+        current_row = self.rooms_list_widget.currentRow()
+        next_row = (current_row + 1) % self.rooms_list_widget.count()
+        self.rooms_list_widget.setCurrentRow(next_row)
+        new_item = self.rooms_list_widget.item(next_row)
+        self.switch_room(new_item.text())
 
     def toggle_left_panel(self):
         if self.rooms_list_widget.isVisible():
@@ -211,40 +245,6 @@ class OpalApp(QMainWindow):
             self.new_chat_button.show()
             self.rename_chat_button.show()  # Show the rename button
             self.toggle_button.setText("<")
-
-    @pyqtSlot()
-    def send_message(self):
-        user_message = self.chat_input.text().strip()
-        self.chat_input.clear()
-
-        if not user_message:
-            return
-
-        self.status_label.setText("Status: Typing...")
-        self.post_message(user_message, "user")
-
-        with self.mutex:
-            if self.current_room not in self.chat_log:
-                self.chat_log[self.current_room] = []
-
-            self.bot_thread = BotThread(user_message, self.chat_log[self.current_room])
-            self.bot_thread.new_message.connect(self.post_message)
-            self.bot_thread.finished.connect(self.reset_status)
-            self.bot_thread.start()
-
-    def post_message(self, message: str, sender: str = "user"):
-        with self.mutex:
-            if self.current_room not in self.chat_log:
-                self.chat_log[self.current_room] = []
-            self.chat_log[self.current_room].append(
-                {"role": sender, "content": message}
-            )
-
-        self.save_chat_history()
-        self.update_ui(message, sender)
-
-    def reset_status(self):
-        self.status_label.setText("Status: Ready")
 
     def update_ui(self, message: str, sender: str):
         now = datetime.datetime.now().strftime("%I:%M %p")  # timestamp
@@ -289,32 +289,6 @@ class OpalApp(QMainWindow):
                 row = items.index(room_name)
                 self.rooms_list_widget.setCurrentRow(row)
 
-    def cycle_through_rooms(self):
-        current_row = self.rooms_list_widget.currentRow()
-        next_row = (current_row + 1) % self.rooms_list_widget.count()
-        self.rooms_list_widget.setCurrentRow(next_row)
-        new_item = self.rooms_list_widget.item(next_row)
-        self.switch_room(new_item.text())
-
-    def save_chat_history(self):
-        with self.mutex:
-            empty_rooms = [room for room, logs in self.chat_log.items() if not logs]
-            for room in empty_rooms:
-                del self.chat_log[room]
-
-            try:
-                with open("chat_history.json", "w") as f:
-                    json.dump(self.chat_log, f)
-            except Exception as e:
-                print(f"Error saving chat history: {e}")
-
-    def load_chat_history(self):
-        try:
-            with open("chat_history.json", "r") as f:
-                self.chat_log = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError, Exception):
-            pass
-
     def show_room_context_menu(self, position):
         context_menu = QMenu()
         rename_room_action = QAction("Rename Room", self)
@@ -334,6 +308,32 @@ class OpalApp(QMainWindow):
             if current_item.text() in self.chat_log:
                 del self.chat_log[current_item.text()]
                 self.switch_room("New Chat")
+
+    def load_chat_history(self):
+        try:
+            with open("chat_history.json", "r") as f:
+                self.chat_log = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, Exception):
+            pass
+
+    def save_chat_history(self):
+        with self.mutex:
+            empty_rooms = [room for room, logs in self.chat_log.items() if not logs]
+            for room in empty_rooms:
+                del self.chat_log[room]
+
+            try:
+                with open("chat_history.json", "w") as f:
+                    json.dump(self.chat_log, f)
+            except Exception as e:
+                print(f"Error saving chat history: {e}")
+
+    def showEvent(self, event):
+        screen_geometry = QDesktopWidget().availableGeometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+        self.move(x, y)
+        self.chat_input.setFocus()
 
 
 if __name__ == "__main__":
