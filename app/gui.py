@@ -85,6 +85,7 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget = QListWidget()
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_input = QLineEdit()
+        self.new_room_button = QPushButton("New Room")
         self.scrollbar = self.chat_log_display.verticalScrollBar()
         self.send_button = QPushButton("Send")
         self.status_label = StatusLabel()
@@ -92,7 +93,6 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget.addItem("New Chat")
         self.rooms_list_widget.setCurrentRow(0)
 
-        # Set rooms_list dimensions
         self.rooms_list_widget.setMaximumWidth(200)
         self.rooms_list_widget.setMinimumWidth(200)
 
@@ -105,6 +105,7 @@ class OpalApp(QMainWindow):
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.toggle_button)
         self.left_layout.addWidget(self.rooms_list_widget)
+        self.left_layout.addWidget(self.new_room_button)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -123,11 +124,18 @@ class OpalApp(QMainWindow):
         self.toggle_button.clicked.connect(self.toggle_left_panel)
         self.send_button.clicked.connect(self.send_message)
         self.chat_input.returnPressed.connect(self.send_message)
+        self.new_room_button.clicked.connect(self.create_new_room)
         self.rooms_list_widget.currentItemChanged.connect(
             lambda new_item, _: self.switch_room(
                 new_item.text() if new_item else "New Chat"
             )
         )
+
+    def create_new_room(self):
+        room_name = "New Chat " + str(len(self.chat_log) + 1)
+        self.rooms_list_widget.addItem(room_name)
+        self.chat_log[room_name] = []
+        self.switch_room(room_name)
 
     def showEvent(self, event):
         screen_geometry = QDesktopWidget().availableGeometry()
