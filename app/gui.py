@@ -93,7 +93,12 @@ class OpalApp(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("Opal")
-        self.setGeometry(50, 50, 825, 700)
+        self.setGeometry(
+            50,
+            50,
+            925,
+            825,
+        )
 
         self.create_shortcuts()
         self.create_widgets()
