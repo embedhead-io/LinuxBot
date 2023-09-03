@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QAction,
     QDesktopWidget,
+    QDialog,
 )
 from utils import bot
 
@@ -77,14 +78,20 @@ class OpalApp(QMainWindow):
         new_chat_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
         new_chat_shortcut.activated.connect(self.create_new_chat)
 
+        rename_chat_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
+        rename_chat_shortcut.activated.connect(self.rename_current_chat)
+
         ctrl_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         ctrl_tab_shortcut.activated.connect(self.cycle_through_rooms)
 
         collapse_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
         collapse_shortcut.activated.connect(self.toggle_left_panel)
 
-        quit_shortcut = QShortcut(QKeySequence("Esc"), self)
-        quit_shortcut.activated.connect(self.close)
+        quit_shortcut_esc = QShortcut(QKeySequence("Esc"), self)
+        quit_shortcut_esc.activated.connect(self.close)
+
+        quit_shortcut_ctrl_q = QShortcut(QKeySequence("Ctrl+Q"), self)
+        quit_shortcut_ctrl_q.activated.connect(self.close)
 
         self.switch_room(self.current_room)
 
@@ -94,6 +101,7 @@ class OpalApp(QMainWindow):
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_input = QLineEdit()
         self.new_chat_button = QPushButton("New Chat")
+        self.rename_chat_button = QPushButton("Rename Chat")
         self.scrollbar = self.chat_log_display.verticalScrollBar()
         self.send_button = QPushButton("Send")
         self.status_label = StatusLabel()
@@ -114,6 +122,7 @@ class OpalApp(QMainWindow):
         self.left_layout.addWidget(self.toggle_button)
         self.left_layout.addWidget(self.rooms_list_widget)
         self.left_layout.addWidget(self.new_chat_button)
+        self.left_layout.addWidget(self.rename_chat_button)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -133,6 +142,7 @@ class OpalApp(QMainWindow):
         self.send_button.clicked.connect(self.send_message)
         self.chat_input.returnPressed.connect(self.send_message)
         self.new_chat_button.clicked.connect(self.create_new_chat)
+        self.rename_chat_button.clicked.connect(self.rename_current_chat)
         self.rooms_list_widget.currentItemChanged.connect(
             lambda new_item, _: self.switch_room(
                 new_item.text() if new_item else "New Chat"
@@ -146,6 +156,40 @@ class OpalApp(QMainWindow):
         self.switch_room(room_name)
         self.chat_input.setFocus()
 
+    def rename_current_chat(self):
+        current_item = self.rooms_list_widget.currentItem()
+        if current_item:
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Rename Chat")
+
+            layout = QVBoxLayout()
+
+            new_name_input = QLineEdit()
+            new_name_input.setText(current_item.text())
+            new_name_input.selectAll()  # Highlights all text
+
+            layout.addWidget(new_name_input)
+
+            confirm_button = QPushButton("Confirm")
+            cancel_button = QPushButton("Cancel")
+
+            layout.addWidget(confirm_button)
+            layout.addWidget(cancel_button)
+
+            dialog.setLayout(layout)
+
+            confirm_button.clicked.connect(dialog.accept)
+            cancel_button.clicked.connect(dialog.reject)
+
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                new_name = new_name_input.text()
+                if new_name:
+                    old_name = current_item.text()
+                    current_item.setText(new_name)
+                    self.chat_log[new_name] = self.chat_log.pop(old_name, [])
+                    self.switch_room(new_name)
+
     def showEvent(self, event):
         screen_geometry = QDesktopWidget().availableGeometry()
         x = (screen_geometry.width() - self.width()) // 2
@@ -154,8 +198,16 @@ class OpalApp(QMainWindow):
         self.chat_input.setFocus()
 
     def toggle_left_panel(self):
-        self.rooms_list_widget.setHidden(not self.rooms_list_widget.isHidden())
-        self.toggle_button.setText(">" if self.rooms_list_widget.isHidden() else "<")
+        if self.rooms_list_widget.isVisible():
+            self.rooms_list_widget.hide()
+            self.new_chat_button.hide()
+            self.rename_chat_button.hide()  # Hide the rename button
+            self.toggle_button.setText(">")
+        else:
+            self.rooms_list_widget.show()
+            self.new_chat_button.show()
+            self.rename_chat_button.show()  # Show the rename button
+            self.toggle_button.setText("<")
 
     @pyqtSlot()
     def send_message(self):
@@ -262,10 +314,14 @@ class OpalApp(QMainWindow):
 
     def show_room_context_menu(self, position):
         context_menu = QMenu()
+        rename_room_action = QAction("Rename Room", self)
+        context_menu.addAction(rename_room_action)
+        rename_room_action.triggered.connect(self.rename_current_chat)
+
         delete_room_action = QAction("Delete Room", self)
         context_menu.addAction(delete_room_action)
-
         delete_room_action.triggered.connect(self.delete_current_room)
+
         context_menu.exec_(self.rooms_list_widget.mapToGlobal(position))
 
     def delete_current_room(self):
