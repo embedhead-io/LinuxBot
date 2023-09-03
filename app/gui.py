@@ -431,10 +431,15 @@ class OpalApp(QMainWindow):
 
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
+        char_format.setFontWeight(QFont.Bold)  # Set the font weight to Bold
 
-        prefix = "You: " if sender == "user" else "Opal: "
+        prefix = "Me: " if sender == "user" else "Opal: "
         cursor.setCharFormat(char_format)
-        cursor.insertText(f"{prefix}{message}")
+        cursor.insertText(prefix)  # Insert the bolded prefix
+
+        char_format.setFontWeight(QFont.Normal)  # Reset the font weight to Normal
+        cursor.setCharFormat(char_format)
+        cursor.insertText(f"{message}")  # Insert the non-bolded message
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
@@ -444,7 +449,7 @@ class OpalApp(QMainWindow):
             notification.notify(
                 title="New Message from Opal",
                 message=message,
-                app_name="Your App Name",
+                app_name="My Opal",
                 timeout=10,
             )
 
