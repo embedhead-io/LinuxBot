@@ -380,7 +380,7 @@ class OpalApp(QMainWindow):
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
 
-        if sender != "user":
+        if sender != "user" and not self.isActiveWindow():
             subprocess.run(["notify-send", "New Message from Opal", message])
 
     def show_room_context_menu(self, position):
