@@ -34,15 +34,15 @@ from PyQt5.QtWidgets import (
 
 # --- Local Imports ---
 from config import (
-    FAST_MODEL,
-    SLOW_MODEL,
+    DEFAULT_MODEL,
     OPENAI_MODELS,
 )
 from utils import bot
 
 # --- Constants ---
 ROOM_NEW_CHAT = "New Chat"
-DEFAULT_MODEL = FAST_MODEL
+
+# --- Settings ---
 hide_side_on_start = True
 
 
