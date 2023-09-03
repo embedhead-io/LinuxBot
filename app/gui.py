@@ -299,11 +299,13 @@ class OpalApp(QMainWindow):
     def toggle_left_panel(self):
         if self.rooms_list_widget.isVisible():
             self.rooms_list_widget.hide()
+            self.model_selector.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
             self.toggle_button.setText(">")
         else:
             self.rooms_list_widget.show()
+            self.model_selector.show()
             self.new_chat_button.show()
             self.rename_chat_button.show()
             self.toggle_button.setText("<")
