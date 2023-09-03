@@ -500,10 +500,3 @@ class OpalApp(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
         self.chat_input.setFocus()
-
-
-if __name__ == "__main__":
-    app = QApplication([])
-    window = OpalApp()
-    window.show()
-    app.exec_()
