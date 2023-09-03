@@ -85,6 +85,7 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget = QListWidget()
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_input = QLineEdit()
+        self.scrollbar = self.chat_log_display.verticalScrollBar()
         self.send_button = QPushButton("Send")
         self.status_label = StatusLabel()
 
@@ -189,6 +190,7 @@ class OpalApp(QMainWindow):
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
+        self.scrollbar.setValue(self.scrollbar.maximum())
 
     def switch_room(self, room_name: str):
         if room_name:
