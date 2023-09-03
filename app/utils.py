@@ -3,6 +3,7 @@ import openai
 
 from config import (
     DEFAULT_MODEL,
+    OPENAI_SYSTEM_MESSAGE,
     OPENAI_TEMPERATURE,
 )
 
@@ -38,7 +39,7 @@ def append_to_chat_log(role: str, content: str, chat_log: list = []):
 
 def bot(user_message: str, chat_log: list = [], model: str = DEFAULT_MODEL):
     if chat_log is None:
-        chat_log = []
+        chat_log = [OPENAI_SYSTEM_MESSAGE]
 
     chat_log = append_to_chat_log(
         role="user",
