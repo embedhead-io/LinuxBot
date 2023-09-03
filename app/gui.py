@@ -1,5 +1,4 @@
 # --- Standard Library Imports ---
-import datetime
 import json
 import threading
 
@@ -11,6 +10,7 @@ from PyQt5.QtGui import (
     QTextCharFormat,
     QColor,
     QKeySequence,
+    QFont,
 )
 from PyQt5.QtWidgets import (
     QApplication,
@@ -118,17 +118,38 @@ class OpalApp(QMainWindow):
         shortcut.activated.connect(func)
 
     def create_widgets(self):
+        font = QFont()
+        font.setPointSize(10)
+
         self.toggle_button = QPushButton("<")
+        self.toggle_button.setFont(font)
+
         self.rooms_list_widget = QListWidget()
+        self.rooms_list_widget.setFont(font)
+
         self.chat_log_display = QTextEdit(readOnly=True)
+        self.chat_log_display.setFont(font)
+
         self.chat_input = QLineEdit()
+        self.chat_input.setFont(font)
+
         self.model_selector = QComboBox()
+        self.model_selector.setFont(font)
         self.model_selector.addItems(OPENAI_MODELS)
+
         self.new_chat_button = QPushButton("New Chat")
+        self.new_chat_button.setFont(font)
+
         self.rename_chat_button = QPushButton("Rename Chat")
+        self.rename_chat_button.setFont(font)
+
         self.scrollbar = self.chat_log_display.verticalScrollBar()
+
         self.send_button = QPushButton("Send")
+        self.send_button.setFont(font)
+
         self.status_label = StatusLabel()
+        self.status_label.setFont(font)
 
         self.rooms_list_widget.addItem("New Chat")
         self.rooms_list_widget.setCurrentRow(0)
@@ -332,7 +353,7 @@ class OpalApp(QMainWindow):
 
         # Char Format for controlling the appearance of the text
         char_format = QTextCharFormat()
-        char_format.setFontPointSize(10)
+        char_format.setFontPointSize(10)  # Font size set to 10
         if sender == "user":
             char_format.setBackground(QColor("#FFFFFF"))  # White for user
         else:
