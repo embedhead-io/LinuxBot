@@ -42,7 +42,7 @@ from config import (
 from utils import bot
 
 # --- Constants ---
-ROOM_NEW_CHAT = "New Chat"
+ROOM_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
 hide_side_on_start = True
@@ -87,7 +87,7 @@ class OpalApp(QMainWindow):
             {}
         )  # New dictionary to hold BotThread instances per room
         self.chat_log = {}
-        self.current_room = "New Chat"
+        self.current_room = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
         self.init_ui()
         self.load_chat_history()
@@ -114,7 +114,8 @@ class OpalApp(QMainWindow):
             self.rooms_list_widget.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
-            self.model_selector.hide()  # Add this line if you also want to hide the model selector
+            self.delete_chat_button.hide()
+            self.model_selector.hide()
             self.toggle_button.setText(">")
 
     def create_shortcuts(self):
@@ -155,6 +156,9 @@ class OpalApp(QMainWindow):
         self.rename_chat_button = QPushButton("Rename Chat")
         self.rename_chat_button.setFont(font)
 
+        self.delete_chat_button = QPushButton("Delete Chat")
+        self.delete_chat_button.setFont(font)
+
         self.scrollbar = self.chat_log_display.verticalScrollBar()
 
         self.send_button = QPushButton("Send")
@@ -163,7 +167,7 @@ class OpalApp(QMainWindow):
         self.status_label = StatusLabel()
         self.status_label.setFont(font)
 
-        self.rooms_list_widget.addItem("New Chat")
+        self.rooms_list_widget.addItem("(New Chat)")
         self.rooms_list_widget.setCurrentRow(0)
 
         self.rooms_list_widget.setMaximumWidth(200)
@@ -181,6 +185,7 @@ class OpalApp(QMainWindow):
         self.left_layout.addWidget(self.model_selector)
         self.left_layout.addWidget(self.new_chat_button)
         self.left_layout.addWidget(self.rename_chat_button)
+        self.left_layout.addWidget(self.delete_chat_button)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -201,6 +206,7 @@ class OpalApp(QMainWindow):
         self.chat_input.returnPressed.connect(self.send_message)
         self.new_chat_button.clicked.connect(self.create_new_chat)
         self.rename_chat_button.clicked.connect(self.rename_current_chat)
+        self.delete_chat_button.clicked.connect(self.delete_current_room)
         self.rooms_list_widget.currentItemChanged.connect(
             lambda new_item, _: self.switch_room(
                 new_item.text() if new_item else "New Chat"
@@ -365,12 +371,14 @@ class OpalApp(QMainWindow):
             self.model_selector.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
+            self.delete_chat_button.hide()
             self.toggle_button.setText(">")
         else:
             self.rooms_list_widget.show()
             self.model_selector.show()
             self.new_chat_button.show()
             self.rename_chat_button.show()
+            self.delete_chat_button.show()
             self.toggle_button.setText("<")
 
     def update_ui(self, message: str, sender: str):
@@ -426,11 +434,11 @@ class OpalApp(QMainWindow):
 
     def delete_current_room(self):
         current_item = self.rooms_list_widget.currentItem()
-        if current_item and current_item.text() != "New Chat":
+        if current_item and current_item.text() != "(New Chat)":
             self.rooms_list_widget.takeItem(self.rooms_list_widget.row(current_item))
             if current_item.text() in self.chat_log:
                 del self.chat_log[current_item.text()]
-                self.switch_room("New Chat")
+                self.switch_room("(New Chat)")
 
     def load_chat_history(self):
         if not os.path.exists(self.CHAT_LOG_DIR):
@@ -447,7 +455,7 @@ class OpalApp(QMainWindow):
             except (FileNotFoundError, json.JSONDecodeError, Exception):
                 pass
 
-        self.switch_room("New Chat")
+        self.switch_room("(New Chat)")
 
     def save_chat_history(self, room, new_message):
         # Generate room-specific chat log path
