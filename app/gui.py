@@ -123,8 +123,8 @@ class OpalApp(QMainWindow):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
         self.create_shortcut("Ctrl+D", self.delete_current_room)
-        self.create_shortcut("Ctrl+Tab", self.cycle_through_rooms)
         self.create_shortcut("Ctrl+1", self.toggle_left_panel)
+        self.create_shortcut("Ctrl+2", self.cycle_through_rooms)
         self.create_shortcut("Esc", self.close)
         self.create_shortcut("Ctrl+Q", self.close)
 
