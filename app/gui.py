@@ -394,7 +394,7 @@ class OpalApp(QMainWindow):
             frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
         else:
             frame_format.setBackground(
-                QColor.fromRgb(246, 245, 244, 255)
+                QColor.fromRgb(240, 240, 240, 255)
             )  # Gray for bot
             frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 65))
 
