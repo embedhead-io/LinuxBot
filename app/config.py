@@ -14,7 +14,7 @@ OPENAI_MODELS = [
     "gpt-3.5-turbo-16k-0613",
     "gpt-3.5-turbo-16k",
 ]
-DEFAULT_MODEL = OPENAI_MODELS[0]
+DEFAULT_MODEL = "gpt-3.5-turbo-16k-0613"
 
 # OpenAI Configurations
 OPENAI_RETRY_LIMIT = 3

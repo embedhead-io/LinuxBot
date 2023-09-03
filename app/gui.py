@@ -93,6 +93,13 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.switch_room(self.current_room)
 
+        # Hide the left panel widgets when the application starts
+        self.rooms_list_widget.hide()
+        self.new_chat_button.hide()
+        self.rename_chat_button.hide()
+        self.model_selector.hide()  # Add this line if you also want to hide the model selector
+        self.toggle_button.setText(">")
+
     def create_shortcuts(self):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
@@ -312,22 +319,30 @@ class OpalApp(QMainWindow):
 
     def update_ui(self, message: str, sender: str):
         cursor = self.chat_log_display.textCursor()
+
+        # Block Format for controlling the box around each message
         block_format = QTextBlockFormat()
+        block_format.setTopMargin(10)  # This controls the margin above the box
+        block_format.setBottomMargin(10)  # This controls the margin below the box
+
+        # Char Format for controlling the appearance of the text inside the box
         char_format = QTextCharFormat()
-
-        block_format.setTopMargin(10)
-        block_format.setBottomMargin(10)
-
-        prefix = "You: " if sender == "user" else "Opal: "
-
+        char_format.setFontPointSize(11)  # Example: Set font size
         if sender == "user":
             char_format.setBackground(QColor("#cce5ff"))
         else:
             char_format.setBackground(QColor("#ffcccc"))
 
-        cursor.insertBlock(block_format, char_format)
+        # Move to the end of the existing text and insert a new block with the specified formatting
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertBlock(block_format)
+
+        # Insert the text itself, also setting its character formatting
+        cursor.setCharFormat(char_format)
+        prefix = "You: " if sender == "user" else "Opal: "
         cursor.insertText(f"{prefix}{message}")
 
+        # Ensure the latest message is visible
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
