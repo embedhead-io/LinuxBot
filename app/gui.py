@@ -90,6 +90,10 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget.addItem("General")
         self.rooms_list_widget.setCurrentRow(0)
 
+        # Set rooms_list dimensions
+        self.rooms_list_widget.setMaximumWidth(200)
+        self.rooms_list_widget.setMinimumWidth(200)
+
         self.rooms_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.rooms_list_widget.customContextMenuRequested.connect(
             self.show_room_context_menu
