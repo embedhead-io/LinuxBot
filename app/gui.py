@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QListWidgetItem,
     QMenu,
     QAction,
+    QDesktopWidget,
 )
 from utils import bot
 
@@ -41,7 +42,7 @@ class BotThread(QThread):
         try:
             with self.mutex:
                 ans = bot(self.user_message, self.chat_log)
-            self.new_message.emit(ans, "bot")
+            self.new_message.emit(ans, "assistant")
         except Exception as e:
             print(f"BotThread error: {e}")
 
@@ -62,7 +63,7 @@ class OpalApp(QMainWindow):
         self.mutex = threading.Lock()
         self.bot_thread = None
         self.chat_log = {}
-        self.current_room = "General"
+        self.current_room = "New Chat"
         self.init_ui()
         self.load_chat_history()
 
@@ -87,7 +88,7 @@ class OpalApp(QMainWindow):
         self.send_button = QPushButton("Send")
         self.status_label = StatusLabel()
 
-        self.rooms_list_widget.addItem("General")
+        self.rooms_list_widget.addItem("New Chat")
         self.rooms_list_widget.setCurrentRow(0)
 
         # Set rooms_list dimensions
@@ -123,9 +124,15 @@ class OpalApp(QMainWindow):
         self.chat_input.returnPressed.connect(self.send_message)
         self.rooms_list_widget.currentItemChanged.connect(
             lambda new_item, _: self.switch_room(
-                new_item.text() if new_item else "General"
+                new_item.text() if new_item else "New Chat"
             )
         )
+
+    def showEvent(self, event):
+        screen_geometry = QDesktopWidget().availableGeometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+        self.move(x, y)
 
     def toggle_left_panel(self):
         self.rooms_list_widget.setHidden(not self.rooms_list_widget.isHidden())
@@ -222,11 +229,11 @@ class OpalApp(QMainWindow):
 
     def delete_current_room(self):
         current_item = self.rooms_list_widget.currentItem()
-        if current_item and current_item.text() != "General":
+        if current_item and current_item.text() != "New Chat":
             self.rooms_list_widget.takeItem(self.rooms_list_widget.row(current_item))
             if current_item.text() in self.chat_log:
                 del self.chat_log[current_item.text()]
-                self.switch_room("General")
+                self.switch_room("New Chat")
 
 
 if __name__ == "__main__":
