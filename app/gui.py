@@ -136,12 +136,14 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget.addItem(room_name)
         self.chat_log[room_name] = []
         self.switch_room(room_name)
+        self.chat_input.setFocus()
 
     def showEvent(self, event):
         screen_geometry = QDesktopWidget().availableGeometry()
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
+        self.chat_input.setFocus()
 
     def toggle_left_panel(self):
         self.rooms_list_widget.setHidden(not self.rooms_list_widget.isHidden())
@@ -204,11 +206,24 @@ class OpalApp(QMainWindow):
         if room_name:
             self.save_chat_history()
             self.current_room = room_name
+            self.setWindowTitle(
+                f"Opal - {self.current_room}"
+            )  # Update window title here
             self.chat_log_display.clear()
             self.load_chat_history()
 
             for entry in self.chat_log.get(self.current_room, []):
                 self.update_ui(entry["content"], entry["role"])
+
+            # Highlight the current room
+            for i in range(self.rooms_list_widget.count()):
+                item = self.rooms_list_widget.item(i)
+                if item.text() == self.current_room:
+                    item.setBackground(
+                        QColor("#d9f2d9")
+                    )  # You can choose your own color
+                else:
+                    item.setBackground(QColor("#ffffff"))  # Reset to white background
 
     def save_chat_history(self):
         with self.mutex:
