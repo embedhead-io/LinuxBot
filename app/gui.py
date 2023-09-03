@@ -93,6 +93,11 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.switch_room(self.current_room)
 
+        # Set the default model from DEFAULT_MODEL in the ComboBox
+        index = self.model_selector.findText(DEFAULT_MODEL, Qt.MatchFixedString)
+        if index >= 0:
+            self.model_selector.setCurrentIndex(index)
+
         # Hide the left panel widgets when the application starts
         self.rooms_list_widget.hide()
         self.new_chat_button.hide()
@@ -322,22 +327,24 @@ class OpalApp(QMainWindow):
 
         # Block Format for controlling the box around each message
         block_format = QTextBlockFormat()
-        block_format.setTopMargin(10)  # This controls the margin above the box
-        block_format.setBottomMargin(10)  # This controls the margin below the box
+        block_format.setTopMargin(5)
+        block_format.setBottomMargin(5)
 
-        # Char Format for controlling the appearance of the text inside the box
+        # Char Format for controlling the appearance of the text
         char_format = QTextCharFormat()
-        char_format.setFontPointSize(11)  # Example: Set font size
+        char_format.setFontPointSize(10)
         if sender == "user":
-            char_format.setBackground(QColor("#cce5ff"))
+            char_format.setBackground(QColor("#FFFFFF"))  # White for user
         else:
-            char_format.setBackground(QColor("#ffcccc"))
+            char_format.setBackground(
+                QColor("#F0F0F0")
+            )  # Very light grey for assistant
 
-        # Move to the end of the existing text and insert a new block with the specified formatting
+        # Move to the end of the existing text and insert a new block for the message
         cursor.movePosition(QTextCursor.End)
         cursor.insertBlock(block_format)
 
-        # Insert the text itself, also setting its character formatting
+        # Insert the text itself
         cursor.setCharFormat(char_format)
         prefix = "You: " if sender == "user" else "Opal: "
         cursor.insertText(f"{prefix}{message}")
