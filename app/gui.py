@@ -74,7 +74,9 @@ class OpalApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.mutex = threading.Lock()
-        self.bot_thread = None
+        self.bot_thread_per_room = (
+            {}
+        )  # New dictionary to hold BotThread instances per room
         self.chat_log = {}
         self.current_room = "New Chat"
         self.init_ui()
@@ -177,12 +179,29 @@ class OpalApp(QMainWindow):
             if self.current_room not in self.chat_log:
                 self.chat_log[self.current_room] = []
 
-            self.bot_thread = BotThread(
-                user_message, self.chat_log[self.current_room], selected_model
-            )
-            self.bot_thread.new_message.connect(self.post_message)
-            self.bot_thread.finished.connect(self.reset_status)
-            self.bot_thread.start()
+            # Create a new BotThread if not already created for this room
+            if self.current_room not in self.bot_thread_per_room:
+                self.bot_thread_per_room[self.current_room] = BotThread(
+                    user_message, self.chat_log[self.current_room], selected_model
+                )
+                self.bot_thread_per_room[self.current_room].new_message.connect(
+                    self.post_message
+                )
+                self.bot_thread_per_room[self.current_room].finished.connect(
+                    self.reset_status
+                )
+
+            else:
+                # Update the existing BotThread's information for this room
+                self.bot_thread_per_room[self.current_room].user_message = user_message
+                self.bot_thread_per_room[self.current_room].chat_log = self.chat_log[
+                    self.current_room
+                ]
+                self.bot_thread_per_room[
+                    self.current_room
+                ].selected_model = selected_model
+
+            self.bot_thread_per_room[self.current_room].start()
 
     def post_message(self, message: str, sender: str = "user"):
         with self.mutex:
@@ -215,7 +234,7 @@ class OpalApp(QMainWindow):
 
             new_name_input = QLineEdit()
             new_name_input.setText(current_item.text())
-            new_name_input.selectAll()  # Highlights all text
+            new_name_input.selectAll()
 
             layout.addWidget(new_name_input)
 
@@ -239,6 +258,37 @@ class OpalApp(QMainWindow):
                     self.chat_log[new_name] = self.chat_log.pop(old_name, [])
                     self.switch_room(new_name)
 
+    def switch_room(self, room_name: str, update_ui: bool = True):
+        if room_name:
+            self.save_chat_history()
+            self.current_room = room_name
+            self.setWindowTitle(f"Opal - {self.current_room}")
+
+            if update_ui:
+                self.chat_log_display.clear()
+                displayed_messages = (
+                    set()
+                )  # Add this line to keep track of displayed messages
+                if room_name in self.chat_log:
+                    for log in self.chat_log[room_name]:
+                        message_key = f"{log['content']}{log['role']}"
+                        if message_key not in displayed_messages:  # Add this check
+                            self.update_ui(log["content"], log["role"])
+                            displayed_messages.add(
+                                message_key
+                            )  # Mark message as displayed
+
+            items = [
+                self.rooms_list_widget.item(i).text()
+                for i in range(self.rooms_list_widget.count())
+            ]
+            if room_name in items:
+                row = items.index(room_name)
+                self.rooms_list_widget.setCurrentRow(row)
+            else:
+                self.rooms_list_widget.addItem(room_name)
+                self.rooms_list_widget.setCurrentRow(self.rooms_list_widget.count() - 1)
+
     def cycle_through_rooms(self):
         current_row = self.rooms_list_widget.currentRow()
         next_row = (current_row + 1) % self.rooms_list_widget.count()
@@ -250,17 +300,15 @@ class OpalApp(QMainWindow):
         if self.rooms_list_widget.isVisible():
             self.rooms_list_widget.hide()
             self.new_chat_button.hide()
-            self.rename_chat_button.hide()  # Hide the rename button
+            self.rename_chat_button.hide()
             self.toggle_button.setText(">")
         else:
             self.rooms_list_widget.show()
             self.new_chat_button.show()
-            self.rename_chat_button.show()  # Show the rename button
+            self.rename_chat_button.show()
             self.toggle_button.setText("<")
 
     def update_ui(self, message: str, sender: str):
-        now = datetime.datetime.now().strftime("%I:%M %p")  # timestamp
-
         cursor = self.chat_log_display.textCursor()
         block_format = QTextBlockFormat()
         char_format = QTextCharFormat()
@@ -276,30 +324,11 @@ class OpalApp(QMainWindow):
             char_format.setBackground(QColor("#ffcccc"))
 
         cursor.insertBlock(block_format, char_format)
-        cursor.insertText(f"{prefix}{message}")  # no timestamp
+        cursor.insertText(f"{prefix}{message}")
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
-
-    def switch_room(self, room_name: str):
-        if room_name:
-            self.save_chat_history()
-            self.current_room = room_name
-            self.setWindowTitle(f"Opal - {self.current_room}")
-            self.chat_log_display.clear()
-            self.load_chat_history()
-
-            for entry in self.chat_log.get(self.current_room, []):
-                self.update_ui(entry["content"], entry["role"])
-
-            items = [
-                self.rooms_list_widget.item(i).text()
-                for i in range(self.rooms_list_widget.count())
-            ]
-            if room_name in items:
-                row = items.index(room_name)
-                self.rooms_list_widget.setCurrentRow(row)
 
     def show_room_context_menu(self, position):
         context_menu = QMenu()
