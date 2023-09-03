@@ -38,7 +38,7 @@ from utils import bot
 
 # --- Constants ---
 ROOM_NEW_CHAT = "New Chat"
-hide_side_panel = False
+hide_side_widgets = True
 
 
 class BotThread(QThread):
@@ -100,7 +100,7 @@ class OpalApp(QMainWindow):
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
-        if hide_side_panel:
+        if hide_side_widgets:
             self.rooms_list_widget.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
