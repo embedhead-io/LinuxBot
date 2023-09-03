@@ -76,7 +76,7 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         new_chat_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
-        new_chat_shortcut.activated.connect(self.create_new_room)
+        new_chat_shortcut.activated.connect(self.create_new_chat)
 
         ctrl_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         ctrl_tab_shortcut.activated.connect(self.cycle_through_rooms)
@@ -91,7 +91,7 @@ class OpalApp(QMainWindow):
         self.rooms_list_widget = QListWidget()
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_input = QLineEdit()
-        self.new_room_button = QPushButton("New Room")
+        self.new_chat_button = QPushButton("New Chat")
         self.scrollbar = self.chat_log_display.verticalScrollBar()
         self.send_button = QPushButton("Send")
         self.status_label = StatusLabel()
@@ -111,7 +111,7 @@ class OpalApp(QMainWindow):
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.toggle_button)
         self.left_layout.addWidget(self.rooms_list_widget)
-        self.left_layout.addWidget(self.new_room_button)
+        self.left_layout.addWidget(self.new_chat_button)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -130,14 +130,14 @@ class OpalApp(QMainWindow):
         self.toggle_button.clicked.connect(self.toggle_left_panel)
         self.send_button.clicked.connect(self.send_message)
         self.chat_input.returnPressed.connect(self.send_message)
-        self.new_room_button.clicked.connect(self.create_new_room)
+        self.new_chat_button.clicked.connect(self.create_new_chat)
         self.rooms_list_widget.currentItemChanged.connect(
             lambda new_item, _: self.switch_room(
                 new_item.text() if new_item else "New Chat"
             )
         )
 
-    def create_new_room(self):
+    def create_new_chat(self):
         room_name = "New Chat " + str(len(self.chat_log) + 1)
         self.rooms_list_widget.addItem(room_name)
         self.chat_log[room_name] = []
@@ -221,15 +221,14 @@ class OpalApp(QMainWindow):
             for entry in self.chat_log.get(self.current_room, []):
                 self.update_ui(entry["content"], entry["role"])
 
-            # Highlight the current room
-            for i in range(self.rooms_list_widget.count()):
-                item = self.rooms_list_widget.item(i)
-                if item.text() == self.current_room:
-                    item.setBackground(
-                        QColor("#d9f2d9")
-                    )  # You can choose your own color
-                else:
-                    item.setBackground(QColor("#ffffff"))  # Reset to white background
+            # Find the index of the room_name and set it as the current row.
+            items = [
+                self.rooms_list_widget.item(i).text()
+                for i in range(self.rooms_list_widget.count())
+            ]
+            if room_name in items:
+                row = items.index(room_name)
+                self.rooms_list_widget.setCurrentRow(row)
 
     def cycle_through_rooms(self):
         current_row = self.rooms_list_widget.currentRow()
