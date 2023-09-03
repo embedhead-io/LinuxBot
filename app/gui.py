@@ -96,7 +96,7 @@ class OpalApp(QMainWindow):
             50,
             50,
             875,
-            725,
+            750,
         )
 
         self.create_shortcuts()
