@@ -1,8 +1,6 @@
 # --- Standard Library Imports ---
 import json
-import markdown
 import os
-import re
 import threading
 from plyer import notification
 
@@ -126,8 +124,7 @@ class OpalApp(QMainWindow):
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
         self.create_shortcut("Ctrl+D", self.delete_current_room)
         self.create_shortcut("Ctrl+1", self.toggle_left_panel)
-        self.create_shortcut("Shift+1", self.toggle_left_panel)
-        self.create_shortcut("Ctrl+Tab", self.cycle_through_rooms)
+        self.create_shortcut("Ctrl+2", self.cycle_through_rooms)
         self.create_shortcut("Esc", self.close)
         self.create_shortcut("Ctrl+Q", self.close)
 
@@ -436,16 +433,6 @@ class OpalApp(QMainWindow):
         char_format.setFontWeight(QFont.Normal)
         cursor.setCharFormat(char_format)
         cursor.insertText(f"{message}")
-
-        # Replace triple backticks with HTML for code blocks
-        code_blocks = re.findall(r"```(.+?)```", message, re.DOTALL)
-        for code_block in code_blocks:
-            formatted_block = f"<pre style='background-color:#f4f4f4;padding:10px;'>{code_block}</pre>"
-            message = message.replace(f"```{code_block}```", formatted_block)
-
-        html_message = markdown.markdown(f"{prefix}{message}")
-
-        cursor.insertHtml(html_message)
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
