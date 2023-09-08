@@ -1,5 +1,7 @@
 # --- Standard Library Imports ---
 import json
+import re
+import markdown
 import os
 import threading
 from plyer import notification
@@ -386,39 +388,11 @@ class OpalApp(QMainWindow):
         frame_format.setBorder(1)
         frame_format.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
         if sender == "user":
-            frame_format.setBackground(
-                QColor.fromRgb(
-                    245,
-                    250,
-                    255,
-                    255,
-                )
-            )
-            frame_format.setBorderBrush(
-                QColor.fromRgb(
-                    0,
-                    0,
-                    0,
-                    50,
-                )
-            )
+            frame_format.setBackground(QColor.fromRgb(245, 250, 255, 255))
+            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
         else:
-            frame_format.setBackground(
-                QColor.fromRgb(
-                    210,
-                    230,
-                    255,
-                    255,
-                )
-            )
-            frame_format.setBorderBrush(
-                QColor.fromRgb(
-                    0,
-                    0,
-                    0,
-                    65,
-                )
-            )
+            frame_format.setBackground(QColor.fromRgb(210, 230, 255, 255))
+            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 65))
 
         cursor.insertFrame(frame_format)
 
@@ -427,24 +401,25 @@ class OpalApp(QMainWindow):
         char_format.setFontWeight(QFont.Bold)
 
         prefix = "Me: " if sender == "user" else "Opal: "
-        cursor.setCharFormat(char_format)
-        cursor.insertText(prefix)
 
-        char_format.setFontWeight(QFont.Normal)
-        cursor.setCharFormat(char_format)
-        cursor.insertText(f"{message}")
+        # Find and format code blocks
+        code_blocks = re.split(r"(```(?:python)?[^`\n]*```)", message)
+
+        for i, block in enumerate(code_blocks):
+            if i % 2 == 0:
+                # This is not a code block, apply markdown formatting
+                formatted_block = markdown.markdown(
+                    f"{prefix}{block}", extensions=["markdown.extensions.fenced_code"]
+                )
+            else:
+                # This is a code block, wrap it in a div with desired styling
+                formatted_block = f"<div style='background-color:#f4f4f4;padding:10px;border:1px solid #ccc;border-radius:4px;'>{block}</div>"
+
+            cursor.insertHtml(formatted_block)
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
-
-        if sender != "user" and not self.isActiveWindow():
-            notification.notify(
-                title="New Message from Opal",
-                message=message,
-                app_name="My Opal",
-                timeout=10,
-            )
 
     def show_room_context_menu(self, position):
         context_menu = QMenu()
