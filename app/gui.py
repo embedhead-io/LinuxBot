@@ -97,7 +97,7 @@ class OpalApp(QMainWindow):
         self.setGeometry(
             50,  # X, which is the distance from the left edge of the screen
             50,  # Y, which is the distance from the top edge of the screen
-            875,  # Width
+            800,  # Width
             625,  # Height
         )
 
