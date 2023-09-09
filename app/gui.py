@@ -1,10 +1,7 @@
 # --- Standard Library Imports ---
 import json
-import re
-import markdown
 import os
 import threading
-from plyer import notification
 
 # --- Third-party Imports ---
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
