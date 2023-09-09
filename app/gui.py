@@ -46,7 +46,7 @@ from utils import bot
 ROOM_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
-hide_side_on_start = True
+hide_side_on_start = False
 
 
 class BotThread(QThread):
@@ -95,10 +95,10 @@ class OpalApp(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("Opal")
         self.setGeometry(
-            50,
-            50,
-            875,
-            750,
+            50,  # X, which is the distance from the left edge of the screen
+            50,  # Y, which is the distance from the top edge of the screen
+            875,  # Width
+            625,  # Height
         )
 
         self.create_shortcuts()
