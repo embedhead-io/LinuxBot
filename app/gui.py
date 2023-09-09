@@ -402,20 +402,7 @@ class OpalApp(QMainWindow):
 
         prefix = "Me: " if sender == "user" else "Opal: "
 
-        # Find and format code blocks
-        code_blocks = re.split(r"(```(?:python)?[^`\n]*```)", message)
-
-        for i, block in enumerate(code_blocks):
-            if i % 2 == 0:
-                # This is not a code block, apply markdown formatting
-                formatted_block = markdown.markdown(
-                    f"{prefix}{block}", extensions=["markdown.extensions.fenced_code"]
-                )
-            else:
-                # This is a code block, wrap it in a div with desired styling
-                formatted_block = f"<div style='background-color:#f4f4f4;padding:10px;border:1px solid #ccc;border-radius:4px;'>{block}</div>"
-
-            cursor.insertHtml(formatted_block)
+        cursor.insertText(f"{prefix}{message}")
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
