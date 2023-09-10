@@ -15,6 +15,7 @@ from PyQt5.QtGui import (
     QFontMetrics,
 )
 from PyQt5.QtWidgets import (
+    qApp,
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -120,6 +121,7 @@ class OpalApp(QMainWindow):
         self.chat_log = {}
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
+        self.is_dark_mode = False
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
@@ -138,6 +140,7 @@ class OpalApp(QMainWindow):
         self.connect_signals()
         self.setCentralWidget(self.main_widget)
         self.switch_chat(self.current_chat)
+        self.set_app_stylesheet()
         index = self.model_selector.findText(DEFAULT_MODEL, Qt.MatchFixedString)
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
@@ -151,12 +154,47 @@ class OpalApp(QMainWindow):
             self.model_selector.hide()
             self.toggle_button.setText(">")
 
+        # Apply the initial stylesheet based on the current mode
+        self.set_app_stylesheet()
+
+    def toggle_mode(self):
+        # Toggle between light and dark modes
+        self.is_dark_mode = not self.is_dark_mode
+        self.set_app_stylesheet()
+
+    def set_app_stylesheet(self):
+        # Define your light and dark mode stylesheets
+        light_mode_stylesheet = """
+        QMainWindow {
+            background-color: #FFFFFF;
+        }
+
+        /* Add more styles for other widgets as needed */
+        """
+
+        dark_mode_stylesheet = """
+        QMainWindow {
+            background-color: #1E1E1E;
+        }
+
+        /* Add more styles for other widgets as needed */
+        """
+
+        # Set the stylesheet for the entire application based on the current mode
+        if self.is_dark_mode:
+            qApp.setStyleSheet(dark_mode_stylesheet)
+            self.mode_toggle_button.setText("Light Mode")
+        else:
+            qApp.setStyleSheet(light_mode_stylesheet)
+            self.mode_toggle_button.setText("Dark Mode")
+
     def create_shortcuts(self):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
         self.create_shortcut("Ctrl+D", self.delete_current_chat)
         self.create_shortcut("Ctrl+1", self.toggle_left_panel)
         self.create_shortcut("Ctrl+2", self.cycle_through_chats)
+        self.create_shortcut("Ctrl+T", self.toggle_mode)
         self.create_shortcut("Esc", self.close)
         self.create_shortcut("Ctrl+Q", self.close)
 
@@ -181,6 +219,11 @@ class OpalApp(QMainWindow):
         self.chat_input.setFont(font)
         self.chat_input.textChanged.connect(self.adjust_input_size)
         self.chat_input.setFixedHeight(50)  # Set an initial height
+
+        # Add a toggle button for light/dark mode
+        self.mode_toggle_button = QPushButton("Dark Mode")
+        self.mode_toggle_button.setFont(font)
+        self.mode_toggle_button.clicked.connect(self.toggle_mode)
 
         self.model_selector = QComboBox()
         self.model_selector.setFont(font)
