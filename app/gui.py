@@ -89,6 +89,12 @@ class StatusLabel(QLabel):
         self.setText("Status: Ready")
         self.setAlignment(Qt.AlignCenter)
 
+    def set_light_theme(self):
+        self.setStyleSheet("color: black;")
+
+    def set_dark_theme(self):
+        self.setStyleSheet("color: white;")
+
 
 class CustomTextEdit(QTextEdit):
     returnPressed = pyqtSignal()
@@ -132,7 +138,8 @@ class OpalApp(QMainWindow):
         self.chat_log = {}
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
-        self.current_theme = "light"  # default theme
+        self.message_history = {}  # Store all messages regardless of theme
+        self.current_theme = "light"  # Initialize the current_theme attribute
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
@@ -164,15 +171,35 @@ class OpalApp(QMainWindow):
             self.delete_chat_button.hide()
             self.model_selector.hide()
             self.toggle_button.setText(">")
+        else:
+            self.toggle_button.setText("<")
+            self.apply_light_theme()
 
     def create_shortcuts(self):
-        self.create_shortcut("Ctrl+N", self.create_new_chat)
-        self.create_shortcut("Ctrl+R", self.rename_current_chat)
-        self.create_shortcut("Ctrl+D", self.delete_current_chat)
-        self.create_shortcut("Ctrl+1", self.toggle_left_panel)
-        self.create_shortcut("Ctrl+2", self.cycle_through_chats)
-        self.create_shortcut("Esc", self.close)
-        self.create_shortcut("Ctrl+Q", self.close)
+        self.create_shortcut(
+            "Ctrl+N", self.create_new_chat
+        )  # Create new (commonly used)
+        self.create_shortcut(
+            "F2", self.rename_current_chat
+        )  # Rename (F2 is often used for renaming)
+        self.create_shortcut(
+            "Del", self.delete_current_chat
+        )  # Delete (Delete key is intuitive for deletion)
+        self.create_shortcut(
+            "Ctrl+T", self.toggle_theme
+        )  # Toggle (Ctrl+T is often used for toggling features)
+        self.create_shortcut(
+            "Ctrl+B", self.toggle_left_panel
+        )  # Toggle Sidebar (Ctrl+B is often used in browsers for bookmarks sidebar, but here it can indicate toggling the sidebar)
+        self.create_shortcut(
+            "Ctrl+Tab", self.cycle_through_chats
+        )  # Cycle through (Ctrl+Tab is commonly used for cycling through tabs)
+        self.create_shortcut(
+            "Esc", self.close
+        )  # Close (Esc is generally used for closing or going back)
+        self.create_shortcut(
+            "Ctrl+Q", self.close
+        )  # Quit (Ctrl+Q is often used to quit applications)
 
     def create_shortcut(self, key_sequence: str, func):
         shortcut = QShortcut(QKeySequence(key_sequence), self)
@@ -273,7 +300,7 @@ class OpalApp(QMainWindow):
 
     @pyqtSlot()
     def send_message(self):
-        user_message = self.chat_input.text().strip()
+        user_message = self.chat_input.toPlainText().strip()
         self.chat_input.clear()
 
         if not user_message:
@@ -309,17 +336,6 @@ class OpalApp(QMainWindow):
                 ].selected_model = selected_model
 
             self.bot_thread_per_chat[self.current_chat].start()
-
-    def post_message(self, message: str, sender: str = "user"):
-        with self.mutex:
-            if self.current_chat not in self.chat_log:
-                self.chat_log[self.current_chat] = [OPENAI_SYSTEM_MESSAGE]
-            self.chat_log[self.current_chat].append(
-                {"role": sender, "content": message}
-            )
-
-        self.save_chat_history(self.current_chat, {"role": sender, "content": message})
-        self.update_ui(message, sender)
 
     def reset_status(self):
         self.status_label.setText("Status: Ready")
@@ -433,13 +449,68 @@ class OpalApp(QMainWindow):
             self.delete_chat_button.show()
             self.toggle_button.setText("<")
 
+    # Modify the post_message method to store messages in the message_history dictionary
+    def post_message(self, message: str, sender: str):
+        with self.mutex:
+            if self.current_chat not in self.chat_log:
+                self.chat_log[self.current_chat] = [OPENAI_SYSTEM_MESSAGE]
+
+            if self.current_chat not in self.message_history:
+                self.message_history[self.current_chat] = []
+
+            self.message_history[self.current_chat].append(
+                {"role": sender, "content": message}
+            )
+
+        self.save_chat_history(self.current_chat, {"role": sender, "content": message})
+        self.update_ui(message, sender)
+
+    def apply_light_theme(self):
+        # Set the current theme to "light"
+        self.current_theme = "light"
+
+        self.setStyleSheet(light_stylesheet)
+        self.status_label.set_light_theme()
+        self.theme_button.setText("Dark")
+        self.set_text_input_theme("black", "white")
+
+        # Display messages from the light theme dictionary
+        self.display_messages(self.light_theme_messages)
+
+    def apply_dark_theme(self):
+        # Set the current theme to "dark"
+        self.current_theme = "dark"
+
+        self.setStyleSheet(dark_stylesheet)
+        self.status_label.set_dark_theme()
+        self.theme_button.setText("Light")
+        self.set_text_input_theme("white", "#2E2E2E")
+
+        # Display messages from the dark theme dictionary
+        self.display_messages(self.dark_theme_messages)
+
+    # Add a method to display messages from the message_history dictionary
+    def display_messages(self):
+        self.chat_log_display.clear()
+        displayed_messages = set()  # To keep track of displayed messages
+        if self.current_chat in self.message_history:
+            for log in self.message_history[self.current_chat]:
+                message_key = f"{log['content']}{log['role']}"
+                if message_key not in displayed_messages and log["role"] != "system":
+                    self.update_ui(log["content"], log["role"])
+                    displayed_messages.add(message_key)  # Mark message as displayed
+
     def toggle_theme(self):
-        if "Dark" in self.theme_button.text():
-            self.setStyleSheet(dark_stylesheet)
-            self.theme_button.setText("Light")
+        if self.current_theme == "light":
+            self.apply_dark_theme()
+            self.current_theme = "dark"
         else:
-            self.setStyleSheet(light_stylesheet)
-            self.theme_button.setText("Dark")
+            self.apply_light_theme()
+            self.current_theme = "light"
+
+    def set_text_input_theme(self, text_color, background_color):
+        input_style = f"color: {text_color}; background-color: {background_color};"
+        self.chat_input.setStyleSheet(input_style)
 
     def adjust_input_size(self):
         # Adjust the height of the chat_input widget based on its content
@@ -458,18 +529,41 @@ class OpalApp(QMainWindow):
         frame_format.setPadding(5)
         frame_format.setBorder(1)
         frame_format.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
-        if sender == "user":
-            frame_format.setBackground(QColor.fromRgb(245, 250, 255, 255))
-            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 50))
+
+        if self.current_theme == "light":
+            if sender == "user":
+                frame_format.setBackground(QColor.fromRgb(220, 220, 220, 255))  # DCDCDC
+                frame_format.setBorderBrush(
+                    QColor.fromRgb(209, 213, 219, 255)
+                )  # D1D5DB
+            else:
+                frame_format.setBackground(QColor.fromRgb(255, 255, 255, 255))  # WHITE
+                frame_format.setBorderBrush(
+                    QColor.fromRgb(209, 213, 219, 255)
+                )  # D1D5DB
         else:
-            frame_format.setBackground(QColor.fromRgb(210, 230, 255, 255))
-            frame_format.setBorderBrush(QColor.fromRgb(0, 0, 0, 65))
+            if sender == "user":
+                frame_format.setBackground(QColor.fromRgb(44, 46, 62, 255))  # 2C2E3E
+                frame_format.setBorderBrush(QColor.fromRgb(74, 75, 91, 255))  # 4A4B5B
+            else:
+                frame_format.setBackground(QColor.fromRgb(30, 31, 42, 255))  # 1E1F2A
+                frame_format.setBorderBrush(QColor.fromRgb(74, 75, 91, 255))  # 4A4B5B
 
         cursor.insertFrame(frame_format)
 
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Bold)
+
+        # Set the text color based on the theme
+        if self.current_theme == "light":
+            char_format.setForeground(
+                QColor.fromRgb(0, 0, 0, 255)
+            )  # Black text for light theme
+        else:
+            char_format.setForeground(
+                QColor.fromRgb(255, 255, 255, 255)
+            )  # White text for dark theme
 
         prefix = "Me: " if sender == "user" else "Opal: "
         cursor.insertText(prefix, char_format)

@@ -2,9 +2,9 @@ QMainWindow {
     background-color: #2E2E2E;
 }
 QTextEdit {
-    background-color: #2E2E2E;
-    color: white;
-    border: 1px solid white;
+    background-color: #1E1E1E;  /* making the background a bit darker */
+    color: black;  /* making the font color black */
+    border: 1px solid black;
 }
 QPushButton {
     background-color: #2E2E2E;
@@ -19,4 +19,5 @@ QPushButton#ThemeButton {
     background-color: #2E2E2E;
     color: white;
     border: 1px solid white;
+    padding: 5px;
 }
