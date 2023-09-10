@@ -12,6 +12,7 @@ from PyQt5.QtGui import (
     QColor,
     QKeySequence,
     QFont,
+    QFontMetrics,
 )
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -75,6 +76,40 @@ class StatusLabel(QLabel):
     def init_ui(self):
         self.setText("Status: Ready")
         self.setAlignment(Qt.AlignCenter)
+
+
+class CustomTextEdit(QTextEdit):
+    returnPressed = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self.toggle_scrollbar)
+        self.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Set the maximum height to correspond to 3 lines of text
+        font_metrics = QFontMetrics(self.font())
+        line_height = font_metrics.lineSpacing()
+        self.setMaximumHeight(line_height * 3 + 20)  # Adjust as necessary
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            if event.modifiers() & Qt.ShiftModifier:
+                super(CustomTextEdit, self).keyPressEvent(event)  # For a new line
+            else:
+                self.returnPressed.emit()  # Emitting the signal
+        else:
+            super(CustomTextEdit, self).keyPressEvent(event)
+
+    def toggle_scrollbar(self):
+        # Get the number of lines in the QTextEdit
+        lines = self.document().blockCount()
+
+        # Set scrollbar policy based on line count
+        if lines > 3:
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        else:
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 
 class OpalApp(QMainWindow):
@@ -142,9 +177,10 @@ class OpalApp(QMainWindow):
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_log_display.setFont(font)
 
-        self.chat_input = QLineEdit()
+        self.chat_input = CustomTextEdit()
         self.chat_input.setFont(font)
-        self.chat_input.setFixedHeight(30)
+        self.chat_input.textChanged.connect(self.adjust_input_size)
+        self.chat_input.setFixedHeight(50)  # Set an initial height
 
         self.model_selector = QComboBox()
         self.model_selector.setFont(font)
@@ -374,6 +410,16 @@ class OpalApp(QMainWindow):
             self.rename_chat_button.show()
             self.delete_chat_button.show()
             self.toggle_button.setText("<")
+
+    def adjust_input_size(self):
+        # Adjust the height of the chat_input widget based on its content
+        doc_height = self.chat_input.document().size().toSize().height()
+        self.chat_input.setFixedHeight(doc_height + 20)  # Adjust as needed
+
+        # You might want to set a maximum height to prevent it from growing too large
+        max_height = 150
+        if self.chat_input.height() > max_height:
+            self.chat_input.setFixedHeight(max_height)
 
     def update_ui(self, message: str, sender: str):
         cursor = self.chat_log_display.textCursor()
