@@ -43,7 +43,7 @@ from utils import bot
 ROOM_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
-hide_side_on_start = False
+hide_side_on_start = True
 
 
 class BotThread(QThread):
@@ -94,8 +94,8 @@ class OpalApp(QMainWindow):
         self.setGeometry(
             50,  # X, which is the distance from the left edge of the screen
             50,  # Y, which is the distance from the top edge of the screen
-            800,  # Width
-            625,  # Height
+            700,  # Width
+            525,  # Height
         )
 
         self.create_shortcuts()
@@ -398,8 +398,11 @@ class OpalApp(QMainWindow):
         char_format.setFontWeight(QFont.Bold)
 
         prefix = "Me: " if sender == "user" else "Opal: "
+        cursor.insertText(prefix, char_format)
 
-        cursor.insertText(f"{prefix}{message}")
+        char_format.setFontPointSize(10)
+        char_format.setFontWeight(QFont.Normal)
+        cursor.insertText(message, char_format)
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
