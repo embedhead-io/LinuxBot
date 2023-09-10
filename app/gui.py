@@ -43,7 +43,7 @@ from utils import bot
 chat_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
-hide_side_on_start = True
+hide_panel_on_start = True
 
 
 class BotThread(QThread):
@@ -92,25 +92,23 @@ class OpalApp(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("Opal")
         self.setGeometry(
-            50,  # X, which is the distance from the left edge of the screen
-            50,  # Y, which is the distance from the top edge of the screen
+            50,  # X
+            50,  # Y
             700,  # Width
             525,  # Height
         )
-
         self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
         self.connect_signals()
         self.setCentralWidget(self.main_widget)
         self.switch_chat(self.current_chat)
-
         index = self.model_selector.findText(DEFAULT_MODEL, Qt.MatchFixedString)
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
     def apply_ui_settings(self):
-        if hide_side_on_start:
+        if hide_panel_on_start:
             self.chats_list_widget.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
