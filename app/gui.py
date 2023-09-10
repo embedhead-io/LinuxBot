@@ -40,7 +40,7 @@ from config import (
 from utils import bot
 
 # --- Constants ---
-ROOM_NEW_CHAT = "(New Chat)"
+chat_NEW_CHAT = "(New Chat)"
 
 # --- Settings ---
 hide_side_on_start = True
@@ -81,9 +81,9 @@ class OpalApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.mutex = threading.Lock()
-        self.bot_thread_per_room = {}
+        self.bot_thread_per_chat = {}
         self.chat_log = {}
-        self.current_room = "(New Chat)"
+        self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
         self.init_ui()
         self.load_chat_history()
@@ -103,7 +103,7 @@ class OpalApp(QMainWindow):
         self.create_layouts()
         self.connect_signals()
         self.setCentralWidget(self.main_widget)
-        self.switch_room(self.current_room)
+        self.switch_chat(self.current_chat)
 
         index = self.model_selector.findText(DEFAULT_MODEL, Qt.MatchFixedString)
         if index >= 0:
@@ -111,7 +111,7 @@ class OpalApp(QMainWindow):
 
     def apply_ui_settings(self):
         if hide_side_on_start:
-            self.rooms_list_widget.hide()
+            self.chats_list_widget.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
             self.delete_chat_button.hide()
@@ -121,9 +121,9 @@ class OpalApp(QMainWindow):
     def create_shortcuts(self):
         self.create_shortcut("Ctrl+N", self.create_new_chat)
         self.create_shortcut("Ctrl+R", self.rename_current_chat)
-        self.create_shortcut("Ctrl+D", self.delete_current_room)
+        self.create_shortcut("Ctrl+D", self.delete_current_chat)
         self.create_shortcut("Ctrl+1", self.toggle_left_panel)
-        self.create_shortcut("Ctrl+2", self.cycle_through_rooms)
+        self.create_shortcut("Ctrl+2", self.cycle_through_chats)
         self.create_shortcut("Esc", self.close)
         self.create_shortcut("Ctrl+Q", self.close)
 
@@ -138,8 +138,8 @@ class OpalApp(QMainWindow):
         self.toggle_button = QPushButton("<")
         self.toggle_button.setFont(font)
 
-        self.rooms_list_widget = QListWidget()
-        self.rooms_list_widget.setFont(font)
+        self.chats_list_widget = QListWidget()
+        self.chats_list_widget.setFont(font)
 
         self.chat_log_display = QTextEdit(readOnly=True)
         self.chat_log_display.setFont(font)
@@ -169,21 +169,21 @@ class OpalApp(QMainWindow):
         self.status_label = StatusLabel()
         self.status_label.setFont(font)
 
-        self.rooms_list_widget.addItem("(New Chat)")
-        self.rooms_list_widget.setCurrentRow(0)
+        self.chats_list_widget.addItem("(New Chat)")
+        self.chats_list_widget.setCurrentRow(0)
 
-        self.rooms_list_widget.setMaximumWidth(200)
-        self.rooms_list_widget.setMinimumWidth(200)
+        self.chats_list_widget.setMaximumWidth(200)
+        self.chats_list_widget.setMinimumWidth(200)
 
-        self.rooms_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.rooms_list_widget.customContextMenuRequested.connect(
-            self.show_room_context_menu
+        self.chats_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.chats_list_widget.customContextMenuRequested.connect(
+            self.show_chat_context_menu
         )
 
     def create_layouts(self):
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.toggle_button)
-        self.left_layout.addWidget(self.rooms_list_widget)
+        self.left_layout.addWidget(self.chats_list_widget)
         self.left_layout.addWidget(self.model_selector)
         self.left_layout.addWidget(self.new_chat_button)
         self.left_layout.addWidget(self.rename_chat_button)
@@ -208,9 +208,9 @@ class OpalApp(QMainWindow):
         self.chat_input.returnPressed.connect(self.send_message)
         self.new_chat_button.clicked.connect(self.create_new_chat)
         self.rename_chat_button.clicked.connect(self.rename_current_chat)
-        self.delete_chat_button.clicked.connect(self.delete_current_room)
-        self.rooms_list_widget.currentItemChanged.connect(
-            lambda new_item, _: self.switch_room(
+        self.delete_chat_button.clicked.connect(self.delete_current_chat)
+        self.chats_list_widget.currentItemChanged.connect(
+            lambda new_item, _: self.switch_chat(
                 new_item.text() if new_item else "New Chat"
             )
         )
@@ -229,54 +229,54 @@ class OpalApp(QMainWindow):
         selected_model = self.model_selector.currentText()
 
         with self.mutex:
-            if self.current_room not in self.chat_log:
-                self.chat_log[self.current_room] = []
+            if self.current_chat not in self.chat_log:
+                self.chat_log[self.current_chat] = []
 
-            if self.current_room not in self.bot_thread_per_room:
-                self.bot_thread_per_room[self.current_room] = BotThread(
-                    user_message, self.chat_log[self.current_room], selected_model
+            if self.current_chat not in self.bot_thread_per_chat:
+                self.bot_thread_per_chat[self.current_chat] = BotThread(
+                    user_message, self.chat_log[self.current_chat], selected_model
                 )
-                self.bot_thread_per_room[self.current_room].new_message.connect(
+                self.bot_thread_per_chat[self.current_chat].new_message.connect(
                     self.post_message
                 )
-                self.bot_thread_per_room[self.current_room].finished.connect(
+                self.bot_thread_per_chat[self.current_chat].finished.connect(
                     self.reset_status
                 )
 
             else:
-                self.bot_thread_per_room[self.current_room].user_message = user_message
-                self.bot_thread_per_room[self.current_room].chat_log = self.chat_log[
-                    self.current_room
+                self.bot_thread_per_chat[self.current_chat].user_message = user_message
+                self.bot_thread_per_chat[self.current_chat].chat_log = self.chat_log[
+                    self.current_chat
                 ]
-                self.bot_thread_per_room[
-                    self.current_room
+                self.bot_thread_per_chat[
+                    self.current_chat
                 ].selected_model = selected_model
 
-            self.bot_thread_per_room[self.current_room].start()
+            self.bot_thread_per_chat[self.current_chat].start()
 
     def post_message(self, message: str, sender: str = "user"):
         with self.mutex:
-            if self.current_room not in self.chat_log:
-                self.chat_log[self.current_room] = [OPENAI_SYSTEM_MESSAGE]
-            self.chat_log[self.current_room].append(
+            if self.current_chat not in self.chat_log:
+                self.chat_log[self.current_chat] = [OPENAI_SYSTEM_MESSAGE]
+            self.chat_log[self.current_chat].append(
                 {"role": sender, "content": message}
             )
 
-        self.save_chat_history(self.current_room, {"role": sender, "content": message})
+        self.save_chat_history(self.current_chat, {"role": sender, "content": message})
         self.update_ui(message, sender)
 
     def reset_status(self):
         self.status_label.setText("Status: Ready")
 
     def create_new_chat(self):
-        room_name = "New Chat " + str(len(self.chat_log) + 1)
-        self.rooms_list_widget.addItem(room_name)
-        self.chat_log[room_name] = []
-        self.switch_room(room_name)
+        chat_name = "New Chat " + str(len(self.chat_log) + 1)
+        self.chats_list_widget.addItem(chat_name)
+        self.chat_log[chat_name] = []
+        self.switch_chat(chat_name)
         self.chat_input.setFocus()
 
     def rename_current_chat(self):
-        current_item = self.rooms_list_widget.currentItem()
+        current_item = self.chats_list_widget.currentItem()
         if current_item:
             dialog = QDialog(self)
             dialog.setWindowTitle("Rename Chat")
@@ -307,7 +307,7 @@ class OpalApp(QMainWindow):
                     old_name = current_item.text()
                     current_item.setText(new_name)
                     self.chat_log[new_name] = self.chat_log.pop(old_name, [])
-                    self.switch_room(new_name)
+                    self.switch_chat(new_name)
 
                     old_chat_log_path = os.path.join(
                         self.CHAT_LOG_DIR, f"{old_name}.json"
@@ -323,16 +323,16 @@ class OpalApp(QMainWindow):
                     if os.path.exists(old_chat_log_path):
                         os.remove(old_chat_log_path)
 
-    def switch_room(self, room_name: str, update_ui: bool = True):
-        if room_name:
-            self.current_room = room_name
-            self.setWindowTitle(f"{self.current_room}")
+    def switch_chat(self, chat_name: str, update_ui: bool = True):
+        if chat_name:
+            self.current_chat = chat_name
+            self.setWindowTitle(f"{self.current_chat}")
 
             if update_ui:
                 self.chat_log_display.clear()
                 displayed_messages = set()  # To keep track of displayed messages
-                if room_name in self.chat_log:
-                    for log in self.chat_log[room_name]:
+                if chat_name in self.chat_log:
+                    for log in self.chat_log[chat_name]:
                         message_key = f"{log['content']}{log['role']}"
                         if (
                             message_key not in displayed_messages
@@ -344,33 +344,33 @@ class OpalApp(QMainWindow):
                             )  # Mark message as displayed
 
             items = [
-                self.rooms_list_widget.item(i).text()
-                for i in range(self.rooms_list_widget.count())
+                self.chats_list_widget.item(i).text()
+                for i in range(self.chats_list_widget.count())
             ]
-            if room_name in items:
-                row = items.index(room_name)
-                self.rooms_list_widget.setCurrentRow(row)
+            if chat_name in items:
+                row = items.index(chat_name)
+                self.chats_list_widget.setCurrentRow(row)
             else:
-                self.rooms_list_widget.addItem(room_name)
-                self.rooms_list_widget.setCurrentRow(self.rooms_list_widget.count() - 1)
+                self.chats_list_widget.addItem(chat_name)
+                self.chats_list_widget.setCurrentRow(self.chats_list_widget.count() - 1)
 
-    def cycle_through_rooms(self):
-        current_row = self.rooms_list_widget.currentRow()
-        next_row = (current_row + 1) % self.rooms_list_widget.count()
-        self.rooms_list_widget.setCurrentRow(next_row)
-        new_item = self.rooms_list_widget.item(next_row)
-        self.switch_room(new_item.text())
+    def cycle_through_chats(self):
+        current_row = self.chats_list_widget.currentRow()
+        next_row = (current_row + 1) % self.chats_list_widget.count()
+        self.chats_list_widget.setCurrentRow(next_row)
+        new_item = self.chats_list_widget.item(next_row)
+        self.switch_chat(new_item.text())
 
     def toggle_left_panel(self):
-        if self.rooms_list_widget.isVisible():
-            self.rooms_list_widget.hide()
+        if self.chats_list_widget.isVisible():
+            self.chats_list_widget.hide()
             self.model_selector.hide()
             self.new_chat_button.hide()
             self.rename_chat_button.hide()
             self.delete_chat_button.hide()
             self.toggle_button.setText(">")
         else:
-            self.rooms_list_widget.show()
+            self.chats_list_widget.show()
             self.model_selector.show()
             self.new_chat_button.show()
             self.rename_chat_button.show()
@@ -408,25 +408,25 @@ class OpalApp(QMainWindow):
         self.chat_log_display.setTextCursor(cursor)
         self.scrollbar.setValue(self.scrollbar.maximum())
 
-    def show_room_context_menu(self, position):
+    def show_chat_context_menu(self, position):
         context_menu = QMenu()
-        rename_room_action = QAction("Rename Room", self)
-        context_menu.addAction(rename_room_action)
-        rename_room_action.triggered.connect(self.rename_current_chat)
+        rename_chat_action = QAction("Rename chat", self)
+        context_menu.addAction(rename_chat_action)
+        rename_chat_action.triggered.connect(self.rename_current_chat)
 
-        delete_room_action = QAction("Delete Room", self)
-        context_menu.addAction(delete_room_action)
-        delete_room_action.triggered.connect(self.delete_current_room)
+        delete_chat_action = QAction("Delete chat", self)
+        context_menu.addAction(delete_chat_action)
+        delete_chat_action.triggered.connect(self.delete_current_chat)
 
-        context_menu.exec_(self.rooms_list_widget.mapToGlobal(position))
+        context_menu.exec_(self.chats_list_widget.mapToGlobal(position))
 
-    def delete_current_room(self):
-        current_item = self.rooms_list_widget.currentItem()
+    def delete_current_chat(self):
+        current_item = self.chats_list_widget.currentItem()
         if current_item and current_item.text() != "(New Chat)":
-            self.rooms_list_widget.takeItem(self.rooms_list_widget.row(current_item))
+            self.chats_list_widget.takeItem(self.chats_list_widget.row(current_item))
             if current_item.text() in self.chat_log:
                 del self.chat_log[current_item.text()]
-                self.switch_room("(New Chat)")
+                self.switch_chat("(New Chat)")
 
             chat_log_path = os.path.join(
                 self.CHAT_LOG_DIR, f"{current_item.text()}.json"
@@ -439,20 +439,20 @@ class OpalApp(QMainWindow):
             return
 
         for filename in os.listdir(self.CHAT_LOG_DIR):
-            room_name = filename.rsplit(".", 1)[0]
-            self.rooms_list_widget.addItem(room_name)
+            chat_name = filename.rsplit(".", 1)[0]
+            self.chats_list_widget.addItem(chat_name)
 
             chat_log_path = os.path.join(self.CHAT_LOG_DIR, filename)
             try:
                 with open(chat_log_path, "r") as f:
-                    self.chat_log[room_name] = json.load(f)
+                    self.chat_log[chat_name] = json.load(f)
             except (FileNotFoundError, json.JSONDecodeError, Exception):
                 pass
 
-        self.switch_room("(New Chat)")
+        self.switch_chat("(New Chat)")
 
-    def save_chat_history(self, room, new_message):
-        chat_log_path = os.path.join(self.CHAT_LOG_DIR, f"{room}.json")
+    def save_chat_history(self, chat, new_message):
+        chat_log_path = os.path.join(self.CHAT_LOG_DIR, f"{chat}.json")
 
         with self.mutex:
             try:
@@ -481,8 +481,8 @@ class OpalApp(QMainWindow):
         self.chat_input.setFocus()
 
     def closeEvent(self, event):
-        if self.current_room == "(New Chat)":
-            file_path = os.path.join(self.CHAT_LOG_DIR, f"{self.current_room}.json")
+        if self.current_chat == "(New Chat)":
+            file_path = os.path.join(self.CHAT_LOG_DIR, f"{self.current_chat}.json")
             if os.path.exists(file_path):
                 os.remove(file_path)
         event.accept()
