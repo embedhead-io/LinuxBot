@@ -1,0 +1,22 @@
+QMainWindow {
+    background-color: #2E2E2E;
+}
+QTextEdit {
+    background-color: #2E2E2E;
+    color: white;
+    border: 1px solid white;
+}
+QPushButton {
+    background-color: #2E2E2E;
+    color: white;
+    border: 1px solid white;
+}
+QStatusBar {
+    font-weight: bold;
+    border-top: 1px solid white;
+}
+QPushButton#ThemeButton {
+    background-color: #2E2E2E;
+    color: white;
+    border: 1px solid white;
+}

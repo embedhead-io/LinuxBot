@@ -47,6 +47,18 @@ chat_NEW_CHAT = "(New Chat)"
 hide_panel_on_start = True
 
 
+# --- Utils ---
+def load_stylesheet(filename):
+    with open(filename, "r") as file:
+        return file.read()
+
+
+# --- Stylesheets ---
+light_stylesheet = load_stylesheet("./light_mode.qss")
+dark_stylesheet = load_stylesheet("./dark_mode.qss")
+
+
+# --- Classes ---
 class BotThread(QThread):
     new_message = pyqtSignal(str, str)
 
@@ -120,6 +132,7 @@ class OpalApp(QMainWindow):
         self.chat_log = {}
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
+        self.current_theme = "light"  # default theme
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
@@ -132,6 +145,7 @@ class OpalApp(QMainWindow):
             700,  # Width
             525,  # Height
         )
+        self.setStyleSheet(light_stylesheet)
         self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
@@ -170,6 +184,12 @@ class OpalApp(QMainWindow):
 
         self.toggle_button = QPushButton("<")
         self.toggle_button.setFont(font)
+
+        self.theme_button = QPushButton("Dark", self)
+        self.theme_button.setObjectName("ThemeButton")
+        self.theme_button.setFont(font)
+        self.theme_button.clicked.connect(self.toggle_theme)
+        self.setStyleSheet(light_stylesheet)
 
         self.chats_list_widget = QListWidget()
         self.chats_list_widget.setFont(font)
@@ -222,6 +242,8 @@ class OpalApp(QMainWindow):
         self.left_layout.addWidget(self.new_chat_button)
         self.left_layout.addWidget(self.rename_chat_button)
         self.left_layout.addWidget(self.delete_chat_button)
+        self.left_layout.addWidget(self.theme_button)
+        self.left_layout.setContentsMargins(1, 1, 1, 1)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -410,6 +432,14 @@ class OpalApp(QMainWindow):
             self.rename_chat_button.show()
             self.delete_chat_button.show()
             self.toggle_button.setText("<")
+
+    def toggle_theme(self):
+        if "Dark" in self.theme_button.text():
+            self.setStyleSheet(dark_stylesheet)
+            self.theme_button.setText("Light")
+        else:
+            self.setStyleSheet(light_stylesheet)
+            self.theme_button.setText("Dark")
 
     def adjust_input_size(self):
         # Adjust the height of the chat_input widget based on its content
