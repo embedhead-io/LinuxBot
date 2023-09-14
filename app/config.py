@@ -1,20 +1,15 @@
 from datetime import datetime
 import pytz
-
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# Date as Monday, June 14, 2021, must be in EST.
 eastern = pytz.timezone("US/Eastern")
 TODAYS_DATE = datetime.now(eastern).strftime("%A, %B %d, %Y")
 
-# OpenAI API Key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# OpenAI Model
 OPENAI_MODELS = [
     "gpt-4-0613",
     "gpt-3.5-turbo-16k-0613",
@@ -23,11 +18,9 @@ FAST_MODEL = "gpt-3.5-turbo-16k-0613"
 SLOW_MODEL = "gpt-4-0613"
 DEFAULT_MODEL = SLOW_MODEL
 
-# OpenAI Configurations
 OPENAI_RETRY_LIMIT = 3
 OPENAI_TEMPERATURE = 0.8
 
-# OpenAI System Messages
 OPENAI_SYSTEM_MESSAGE = {
     "role": "system",
     "content": f"""
@@ -47,5 +40,4 @@ OPENAI_SYSTEM_MESSAGE = {
     """,
 }
 
-# Chat Log Path
 CHAT_LOG_PATH = "chat_history.json"

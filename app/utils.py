@@ -37,18 +37,9 @@ def append_to_chat_log(role: str, content: str, chat_log: list = []):
     return chat_log
 
 
-def reset_chat_log(chat_log: list = []):
-    chat_log = []
-    return chat_log
-
-
 def bot(user_message: str, chat_log: list = [], model: str = DEFAULT_MODEL):
     if chat_log is None:
         chat_log = [OPENAI_SYSTEM_MESSAGE]
-
-    if user_message.startswith("/reset"):
-        chat_log = reset_chat_log(chat_log)
-        return None
 
     chat_log = append_to_chat_log(
         role="user",
