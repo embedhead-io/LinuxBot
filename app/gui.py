@@ -1,9 +1,8 @@
-# --- Standard Library Imports ---
+# gui.py
 import json
+import logging
 import os
 import threading
-
-# --- Third-party Imports ---
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
     QTextCursor,
@@ -33,40 +32,50 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-# --- Local Imports ---
-from config import (
+from llm import (
     DEFAULT_MODEL,
     OPENAI_MODELS,
     OPENAI_SYSTEM_MESSAGE,
 )
-from utils import bot
+from utils import (
+    process_message,
+)
 
-# --- Constants ---
+# Logging
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+# Constants
 chat_NEW_CHAT = "(New Chat)"
 
-# --- Settings ---
+# Settings
 hide_panel_on_start = True
 
 
 class BotThread(QThread):
-    new_message = pyqtSignal(str, str)
+    new_message = pyqtSignal(str, str, str, str)  # Modify signal to include URL
 
     def __init__(
-        self, user_message: str, chat_log: list, selected_model: str = DEFAULT_MODEL
+        self,
+        user_message: str,
+        chat_log: dict,
+        selected_model: str = DEFAULT_MODEL,
     ):
         super().__init__()
         self.user_message = user_message
         self.chat_log = chat_log
         self.selected_model = selected_model
-        self.mutex = threading.Lock()
 
     def run(self):
         try:
-            with self.mutex:
-                ans = bot(self.user_message, self.chat_log, self.selected_model)
-            self.new_message.emit(ans, "assistant")
+            response_message, url, self.chat_log = process_message(
+                self.user_message,
+                self.chat_log,
+            )
+            self.new_message.emit(response_message, "assistant", "", url if url else "")
         except Exception as e:
-            print(f"BotThread error: {e}")
+            logging.error(f"Error generating response: {e}")
 
 
 class StatusLabel(QLabel):
@@ -118,7 +127,7 @@ class OpalApp(QMainWindow):
         super().__init__()
         self.mutex = threading.Lock()
         self.bot_thread_per_chat = {}
-        self.chat_log = {}
+        self.chat_log = {"(New Chat)": []}  # Initialize chat_log properly
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "chat_logs"
         self.is_dark_mode = False
@@ -147,15 +156,18 @@ class OpalApp(QMainWindow):
 
     def apply_ui_settings(self):
         if hide_panel_on_start:
-            self.chats_list_widget.hide()
-            self.new_chat_button.hide()
-            self.rename_chat_button.hide()
-            self.delete_chat_button.hide()
-            self.model_selector.hide()
-            self.toggle_button.setText(">")
+            self.hide_panels()
 
         # Apply the initial stylesheet based on the current mode
         self.set_app_stylesheet()
+
+    def hide_panels(self):
+        self.chats_list_widget.hide()
+        self.model_selector.hide()
+        self.new_chat_button.hide()
+        self.rename_chat_button.hide()
+        self.delete_chat_button.hide()
+        self.toggle_button.setText(">")
 
     def toggle_mode(self):
         # Toggle between light and dark modes
@@ -307,7 +319,12 @@ class OpalApp(QMainWindow):
 
         with self.mutex:
             if self.current_chat not in self.chat_log:
-                self.chat_log[self.current_chat] = []
+                self.chat_log[self.current_chat] = [OPENAI_SYSTEM_MESSAGE]
+
+            # Append the user message to the chat log
+            self.chat_log[self.current_chat].append(
+                {"role": "user", "content": user_message}
+            )
 
             if self.current_chat not in self.bot_thread_per_chat:
                 self.bot_thread_per_chat[self.current_chat] = BotThread(
@@ -319,7 +336,6 @@ class OpalApp(QMainWindow):
                 self.bot_thread_per_chat[self.current_chat].finished.connect(
                     self.reset_status
                 )
-
             else:
                 self.bot_thread_per_chat[self.current_chat].user_message = user_message
                 self.bot_thread_per_chat[self.current_chat].chat_log = self.chat_log[
@@ -331,16 +347,20 @@ class OpalApp(QMainWindow):
 
             self.bot_thread_per_chat[self.current_chat].start()
 
-    def post_message(self, message: str, sender: str = "user"):
+    def post_message(self, message: str, sender: str = "user", url: str = ""):
         with self.mutex:
             if self.current_chat not in self.chat_log:
                 self.chat_log[self.current_chat] = [OPENAI_SYSTEM_MESSAGE]
+            elif not isinstance(self.chat_log[self.current_chat], list):
+                self.chat_log[self.current_chat] = [self.chat_log[self.current_chat]]
             self.chat_log[self.current_chat].append(
                 {"role": sender, "content": message}
             )
 
-        self.save_chat_history(self.current_chat, {"role": sender, "content": message})
-        self.update_ui(message, sender)
+        self.save_chat_history(
+            self.current_chat, {"role": sender, "content": message, "url": url}
+        )
+        self.update_ui(message, sender, url)
 
     def reset_status(self):
         self.status_label.setText("Status: Ready")
@@ -348,7 +368,10 @@ class OpalApp(QMainWindow):
     def create_new_chat(self):
         chat_name = "New Chat " + str(len(self.chat_log) + 1)
         self.chats_list_widget.addItem(chat_name)
+
+        # Initialize chat_log as an empty list for the new chat
         self.chat_log[chat_name] = []
+
         self.switch_chat(chat_name)
         self.chat_input.setFocus()
 
@@ -464,7 +487,7 @@ class OpalApp(QMainWindow):
         if self.chat_input.height() > max_height:
             self.chat_input.setFixedHeight(max_height)
 
-    def update_ui(self, message: str, sender: str):
+    def update_ui(self, message: str, sender: str, url: str = ""):
         cursor = self.chat_log_display.textCursor()
 
         frame_format = QTextFrameFormat()
@@ -490,6 +513,18 @@ class OpalApp(QMainWindow):
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Normal)
         cursor.insertText(message, char_format)
+
+        if url:
+            cursor.insertText(" (URL: ", char_format)
+            url_format = QTextCharFormat()
+            url_format.setFontPointSize(10)
+            url_format.setFontWeight(QFont.Bold)
+            url_format.setUnderlineStyle(QTextCharFormat.SingleUnderline)
+            url_format.setAnchor(True)
+            url_format.setAnchorHref(url)
+            url_format.setForeground(QColor.fromRgb(0, 0, 255))
+            cursor.insertText(url, url_format)
+            cursor.insertText(")", char_format)
 
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
@@ -573,3 +608,14 @@ class OpalApp(QMainWindow):
             if os.path.exists(file_path):
                 os.remove(file_path)
         event.accept()
+
+
+if __name__ == "__main__":
+    import sys
+
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication(sys.argv)
+    opal = OpalApp()
+    opal.show()
+    app.exec_()

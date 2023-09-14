@@ -2,4 +2,3 @@ openai
 PyQt5
 python-dotenv
 markdown
-re

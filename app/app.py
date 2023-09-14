@@ -1,13 +1,12 @@
 from PyQt5.QtWidgets import QApplication
 from gui import OpalApp
+import logging
 
-
-def main():
-    app = QApplication([])
-    window = OpalApp()
-    window.show()
-    app.exec_()
+logging.basicConfig(level=logging.DEBUG)
 
 
 if __name__ == "__main__":
-    main()
+    app = QApplication([])
+    opal = OpalApp()
+    opal.show()
+    app.exec_()

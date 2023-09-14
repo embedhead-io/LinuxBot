@@ -1,63 +1,172 @@
-import os
+## utils.py
+import logging
 import openai
+import random
+import time
 
 from config import (
+    ERROR_MESSAGE,
+)
+from llm import (
     DEFAULT_MODEL,
+    OPENAI_RETRY_LIMIT,
+    OPENAI_SYSTEM_INSTRUCTIONS,
     OPENAI_SYSTEM_MESSAGE,
     OPENAI_TEMPERATURE,
 )
 
-
-def initialize_openai(api_key):
-    if not api_key:
-        raise ValueError("API key for OpenAI is not set.")
-    openai.api_key = api_key
+logging.basicConfig(level=logging.DEBUG)
 
 
-def generate_text(chat_log: list, model: str = DEFAULT_MODEL):
-    try:
-        res = openai.ChatCompletion.create(
-            model=model,
-            messages=chat_log,
-            temperature=OPENAI_TEMPERATURE,
-        )
-        ans = res.choices[0].message.content.strip()
-        return ans, None
-    except Exception as e:
-        return None, str(e)
+# Utility functions to work with data and handle retries
+def handle_retry(
+    retries: int, base_delay: float, max_delay: float, jitter: float
+) -> int:
+    """
+    Handle retry mechanism with exponential backoff and jitter.
+
+    Parameters:
+    retries (int): The current number of retries.
+    base_delay (float): The base delay in seconds.
+    max_delay (float): The maximum delay in seconds.
+    jitter (float): The jitter value to add randomness to the delay.
+
+    Returns:
+    int: The incremented retry count.
+    """
+    retries += 1
+    delay = base_delay * (2**retries) + jitter * random.random()
+    delay = min(delay, max_delay)
+    time.sleep(delay)
+    return retries
 
 
-def append_to_chat_log(role: str, content: str, chat_log: list = []):
-    chat_log.append(
-        {
-            "role": role,
-            "content": content,
-        }
+# Functions to interact with OpenAI's API for generating responses
+def ask_llm(chat_log: list):
+    """
+    Generate a response using either the OpenAI API or the Replicate API based on the user's message.
+
+    Parameters:
+    chat_log (list): The chat log containing the conversation history.
+
+    Returns:
+    tuple: The response message and a URL if applicable.
+    """
+    # Get most recent message where "role" is "user" and get the content
+    if chat_log[-1]["role"] == "user":
+        user_message = chat_log[-1]["content"]
+    else:
+        user_message = None
+
+    ans = None
+    url = None
+
+    retries = 0
+    base_delay = 2
+    max_delay = 10
+    jitter = 0.5
+
+    while ans is None and retries < OPENAI_RETRY_LIMIT:
+        try:
+            ans, url = generate_text(chat_log)
+        except openai.error.OpenAIError as e:
+            logging.error(f"OpenAI API error: {e}")
+            retries = handle_retry(retries, base_delay, max_delay, jitter)
+        except Exception as e:
+            logging.error(f"Unexpected error: {e}")
+            break
+
+    if ans is None:
+        ans = ERROR_MESSAGE
+
+    return ans.strip(), url
+
+
+def generate_text(chat_log: list):
+    """
+    Generate a text response using the OpenAI API.
+
+    Parameters:
+    chat_log (list): The chat log containing the conversation history.
+
+    Returns:
+    tuple: The generated response message and None (since no URL is generated in this function).
+    """
+    res = openai.ChatCompletion.create(
+        model=DEFAULT_MODEL,
+        messages=chat_log,
+        temperature=OPENAI_TEMPERATURE,
     )
+    ans = res.choices[0].message.content.strip()
+    return ans, None
+
+
+# Functions to work with the chat log
+def initialize_chat_log():
+    """
+    Initialize a new chat log with a predefined system message.
+
+    Returns:
+    list: A list containing the initial system message.
+    """
+    return [OPENAI_SYSTEM_MESSAGE]
+
+
+def trim_chat_log(chat_log: list, max_length: int = 10):
+    """
+    Trim the chat log to a maximum length.
+
+    Parameters:
+    chat_log (list): The chat log to trim.
+    max_length (int, optional): The maximum length of the chat log. Defaults to 10.
+
+    Returns:
+    list: The trimmed chat log.
+    """
+    if len(chat_log) > max_length:
+        chat_log = chat_log[-max_length:]
     return chat_log
 
 
-def bot(user_message: str, chat_log: list = [], model: str = DEFAULT_MODEL):
-    if chat_log is None:
-        chat_log = [OPENAI_SYSTEM_MESSAGE]
+def append_to_chat_log(role: str, content: str, chat_log: list = []) -> list:
+    """
+    Appends a message to the chat log.
 
-    chat_log = append_to_chat_log(
-        role="user",
-        content=user_message,
-        chat_log=chat_log,
-    )
+    Parameters:
+    role (str): The role (user or assistant) of the message sender.
+    content (str): The content of the message to append.
+    chat_log (list, optional): The chat log to append the message to. Defaults to None.
 
-    ans, err = generate_text(chat_log, model)
-    if err:
-        return err
-
-    chat_log = append_to_chat_log(
-        role="assistant",
-        content=ans,
-        chat_log=chat_log,
-    )
-    return ans
+    Returns:
+    list: The updated chat log with the new message appended.
+    """
+    chat_log.append({"role": role, "content": content})
+    return chat_log
 
 
-# Initialize OpenAI API key
-initialize_openai(os.environ.get("OPENAI_API_KEY"))
+def process_message(user_message: str, chat_log: list = []):
+    """
+    Process the user's message and return a response.
+
+    Parameters:
+    user_message (str): The message from the user.
+    chat_log (list, optional): The chat log containing the conversation history. Defaults to None.
+
+    Returns:
+    tuple: The response message, a URL if applicable, and the updated chat log.
+    """
+    if chat_log == []:
+        chat_log = initialize_chat_log()
+    else:
+        if user_message.startswith("?"):
+            system_message = OPENAI_SYSTEM_INSTRUCTIONS
+        else:
+            system_message = OPENAI_SYSTEM_MESSAGE
+
+        chat_log = [system_message] + trim_chat_log(chat_log[1:])
+
+    ans, url = ask_llm(chat_log)
+    chat_log = append_to_chat_log("user", user_message, chat_log)
+    chat_log = append_to_chat_log("assistant", ans, chat_log)
+
+    return ans, url, chat_log
