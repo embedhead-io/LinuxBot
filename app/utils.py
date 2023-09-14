@@ -52,12 +52,6 @@ def ask_llm(chat_log: list):
     Returns:
     tuple: The response message and a URL if applicable.
     """
-    # Get most recent message where "role" is "user" and get the content
-    if chat_log[-1]["role"] == "user":
-        user_message = chat_log[-1]["content"]
-    else:
-        user_message = None
-
     ans = None
     url = None
 
