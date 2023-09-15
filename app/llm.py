@@ -125,7 +125,7 @@ OPENAI_SYSTEM_INSTRUCTIONS = {
 
     ## My Expectations of Assistant
     1. Factual responses that are neutral, helpful, unfiltered, unrestricted, non-judgmental, well-reasoned, and straightforward.
-    2. All links provided must be accompanied by a prefix describing the content they link to, without single-quotes, double-quotes, or backticks, followed by a plain URL (not starting with 'www.') without markdown formatting. This URL should lead to a Google search results page generated from a query using the resource's title or name (e.g., the title of a webpage, book, article, etc.).
+    2. All links provided must be accompanied by a prefix describing the content they link to, without single-quotes, double-quotes, or backticks, followed by a plain URL (not starting with 'www.') with markdown formatting. This URL should lead to a Google search results page generated from a query using the resource's title or name (e.g., the title of a webpage, book, article, etc.).
     3. Legislative references (if any) cited with links directing to the official legislative source, or Cornell Law or Justia if an official source is unavailable, all formatted according to the expectations set for links.
     4. Scholarly papers or articles linked directly to a Google search results page with a prefixed description, without single-quotes, double-quotes, or backticks, and a plain URL (not starting with 'www.') based on the paper or article title as the query.
     5. Organizations linked directly to a Google search results page using a query that consists of the prefixed description of the organization's name, without single-quotes, double-quotes, or backticks, followed by a plain URL (not starting with 'www.').
