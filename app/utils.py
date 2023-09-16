@@ -96,16 +96,6 @@ def generate_text(chat_log: list):
 
 
 # Functions to work with the chat log
-def initialize_chat_log():
-    """
-    Initialize a new chat log with a predefined system message.
-
-    Returns:
-    list: A list containing the initial system message.
-    """
-    return [OPENAI_SYSTEM_MESSAGE]
-
-
 def trim_chat_log(chat_log: list, max_length: int = 10):
     """
     Trim the chat log to a maximum length.
@@ -149,16 +139,26 @@ def process_message(user_message: str, chat_log: list = []):
     Returns:
     tuple: The response message, a URL if applicable, and the updated chat log.
     """
-    if chat_log == []:
-        chat_log[0] = OPENAI_SYSTEM_MESSAGE
-    else:
-        if user_message.startswith("?"):
-            chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
-        else:
-            chat_log[0] = OPENAI_SYSTEM_MESSAGE
+    # If the chat log is an empty list, set chat_log[0] equal to the OPENAI_SYSTEM_MESSAGE.
+    if len(chat_log) == 0:
+        chat_log.append(OPENAI_SYSTEM_MESSAGE)
 
-    ans, url = ask_llm(chat_log)
+    # Append the user's message to the chat log
     chat_log = append_to_chat_log("user", user_message, chat_log)
+
+    # If the user's message begins with "?", set chat_log[0] equal to the OPENAI_SYSTEM_INSTRUCTIONS. Otherwise, default to OPENAI_SYSTEM_MESSAGE.
+    if user_message.startswith("?"):
+        chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
+    else:
+        chat_log[0] = OPENAI_SYSTEM_MESSAGE
+
+    # Generate a response
+    ans, url = ask_llm(chat_log)
+
+    # Append the response to the chat log
     chat_log = append_to_chat_log("assistant", ans, chat_log)
+
+    # Trim the chat log
+    chat_log = trim_chat_log(chat_log)
 
     return ans, url, chat_log
