@@ -95,6 +95,7 @@ OPENAI_SYSTEM_INSTRUCTIONS = {
     5. Respond with the expert's best possible answer, at the verbosity requested, and formatted with this template:
 
     '''
+    (insert a new line here)
     EXPERT: [your assumed expert role]
     OBJECTIVE: [single concise sentence describing your current objective]
     ASSUMPTIONS: [your assumptions about my question, intent, and context] 
