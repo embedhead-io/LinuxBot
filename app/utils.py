@@ -150,14 +150,12 @@ def process_message(user_message: str, chat_log: list = []):
     tuple: The response message, a URL if applicable, and the updated chat log.
     """
     if chat_log == []:
-        chat_log = initialize_chat_log()
+        chat_log[0] = OPENAI_SYSTEM_MESSAGE
     else:
         if user_message.startswith("?"):
-            system_message = OPENAI_SYSTEM_INSTRUCTIONS
+            chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
         else:
-            system_message = OPENAI_SYSTEM_MESSAGE
-
-        chat_log = [system_message] + trim_chat_log(chat_log[1:])
+            chat_log[0] = OPENAI_SYSTEM_MESSAGE
 
     ans, url = ask_llm(chat_log)
     chat_log = append_to_chat_log("user", user_message, chat_log)

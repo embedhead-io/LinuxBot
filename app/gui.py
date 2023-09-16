@@ -1,9 +1,7 @@
 # gui.py
 import json
 import logging
-import markdown2
 import os
-import re
 import threading
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
@@ -515,18 +513,7 @@ class OpalApp(QMainWindow):
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Normal)
 
-        # Detect Markdown formatting using regular expressions
-        markdown_matches = re.findall(r"(\*\*|__)(.*?)\1", message, re.DOTALL)
-        if markdown_matches:
-            for match in markdown_matches:
-                # Replace Markdown formatting with HTML rendering
-                message = message.replace(
-                    match[0] + match[1] + match[0], f"<strong>{match[1]}</strong>"
-                )
-
-        # Render any remaining Markdown content using markdown2
-        rendered_message = markdown2.markdown(message)
-        cursor.insertHtml(rendered_message)
+        cursor.insertText(message, char_format)
 
         if url:
             cursor.insertText(" (URL: ", char_format)
