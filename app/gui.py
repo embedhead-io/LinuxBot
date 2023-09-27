@@ -490,6 +490,9 @@ class OpalApp(QMainWindow):
     def update_ui(self, message: str, sender: str, url: str = ""):
         cursor = self.chat_log_display.textCursor()
 
+        # Move the cursor to the end of the document to avoid overlapping
+        cursor.movePosition(QTextCursor.End)
+
         frame_format = QTextFrameFormat()
         frame_format.setPadding(5)
         frame_format.setBorder(1)
