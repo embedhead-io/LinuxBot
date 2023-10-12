@@ -96,7 +96,7 @@ def generate_text(chat_log: list):
 
 
 # Functions to work with the chat log
-def trim_chat_log(chat_log: list, max_length: int = 10):
+def trim_chat_log(chat_log: list, max_length: int = 100):
     """
     Trim the chat log to a maximum length.
 

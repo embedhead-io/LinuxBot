@@ -141,7 +141,7 @@ class OpalApp(QMainWindow):
             50,  # X
             50,  # Y
             700,  # Width
-            525,  # Height
+            625,  # Height
         )
         self.create_shortcuts()
         self.create_widgets()
