@@ -10,6 +10,7 @@ from config import (
 from llm import (
     DEFAULT_MODEL,
     OPENAI_RETRY_LIMIT,
+    OPENAI_COMEDY_SYSTEM_MESSAGE,
     OPENAI_SYSTEM_INSTRUCTIONS,
     OPENAI_SYSTEM_MESSAGE,
     OPENAI_TEMPERATURE,
@@ -149,6 +150,8 @@ def process_message(user_message: str, chat_log: list = []):
     # If the user's message begins with "?", set chat_log[0] equal to the OPENAI_SYSTEM_INSTRUCTIONS. Otherwise, default to OPENAI_SYSTEM_MESSAGE.
     if user_message.startswith("?"):
         chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
+    elif user_message.startswith("!"):
+        chat_log[0] = OPENAI_COMEDY_SYSTEM_MESSAGE
     else:
         chat_log[0] = OPENAI_SYSTEM_MESSAGE
 
