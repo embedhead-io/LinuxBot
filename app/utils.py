@@ -18,6 +18,8 @@ from llm import (
 
 logging.basicConfig(level=logging.DEBUG)
 
+client = openai.OpenAI()
+
 
 # Utility functions to work with data and handle retries
 def handle_retry(
@@ -64,7 +66,7 @@ def ask_llm(chat_log: list):
     while ans is None and retries < OPENAI_RETRY_LIMIT:
         try:
             ans, url = generate_text(chat_log)
-        except openai.error.OpenAIError as e:
+        except openai.APIConnectionError as e:
             logging.error(f"OpenAI API error: {e}")
             retries = handle_retry(retries, base_delay, max_delay, jitter)
         except Exception as e:
@@ -87,7 +89,7 @@ def generate_text(chat_log: list):
     Returns:
     tuple: The generated response message and None (since no URL is generated in this function).
     """
-    res = openai.ChatCompletion.create(
+    res = client.chat.completions.create(
         model=DEFAULT_MODEL,
         messages=chat_log,
         temperature=OPENAI_TEMPERATURE,
