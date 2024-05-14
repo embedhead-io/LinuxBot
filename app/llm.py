@@ -25,11 +25,12 @@ OPENAI_MODELS = [
     "gpt-4-0613",
     "gpt-3.5-turbo-16k-0613",
     "gpt-4-0125-preview",
+    "gpt-4o",
 ]
 
 # OpenAI Model Configurations
-FAST_MODEL = "gpt-3.5-turbo-16k-0613"
-SLOW_MODEL = "gpt-4-0125-preview"
+FAST_MODEL = "gpt-4o"
+SLOW_MODEL = "gpt-4o"
 DEFAULT_MODEL = SLOW_MODEL
 OPENAI_MODEL = SLOW_MODEL
 DEFAULT_MODEL = OPENAI_MODEL
