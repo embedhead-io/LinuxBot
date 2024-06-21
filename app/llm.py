@@ -20,6 +20,8 @@ OPENAI_TEMPERATURE = 0.8
 
 # OpenAI Models
 OPENAI_MODELS = [
+    "gpt-4o",
+    "gpt-4-turbo",
     "gpt-4",
     "gpt-3.5-turbo-16k",
     "gpt-4-0613",

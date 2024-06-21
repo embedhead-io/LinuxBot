@@ -510,7 +510,7 @@ class OpalApp(QMainWindow):
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Bold)
 
-        prefix = "Me: " if sender == "user" else "Opal: "
+        prefix = "Me \n\n" if sender == "user" else "Opal \n\n"
         cursor.insertText(prefix, char_format)
 
         char_format.setFontPointSize(10)
