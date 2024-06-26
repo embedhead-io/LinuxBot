@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import logging
 import time
 import random
@@ -11,7 +11,7 @@ from .config import (
 )
 
 # Configure the OpenAI client with the API key
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 RETRY_LIMIT = 3  # Define retry limit as a constant
 
@@ -42,9 +42,6 @@ def ask_llm(chat_log, selected_model):
 
 def generate_text(chat_log, selected_model=DEFAULT_MODEL):
     """Generate a response from the OpenAI API based on the given chat log."""
-    res = openai.ChatCompletion.create(
-        model=DEFAULT_MODEL,
-        messages=chat_log,
-    )
-    ans = res.choices[0].message["content"].strip()
+    res = client.chat.completions.create(model=DEFAULT_MODEL, messages=chat_log)
+    ans = res.choices[0].message.content.strip()
     return ans, None

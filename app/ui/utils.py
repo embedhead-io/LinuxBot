@@ -1,5 +1,7 @@
 import logging
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
 import random
 import time
 from ..llm.config import (
@@ -15,7 +17,7 @@ from ..llm.config import (
 logging.basicConfig(level=logging.DEBUG)
 
 # Configure the OpenAI client with the API key
-openai.api_key = "YOUR_OPENAI_API_KEY"  # Ensure to replace with actual API key
+# Ensure to replace with actual API key
 
 
 # Utility functions to work with data and handle retries
@@ -86,12 +88,10 @@ def generate_text(chat_log: list):
     Returns:
     tuple: The generated response message and None (since no URL is generated in this function).
     """
-    res = openai.ChatCompletion.create(
-        model=DEFAULT_MODEL,
-        messages=chat_log,
-        temperature=OPENAI_TEMPERATURE,
+    res = client.chat.completions.create(
+        model=DEFAULT_MODEL, messages=chat_log, temperature=OPENAI_TEMPERATURE
     )
-    ans = res.choices[0].message["content"].strip()
+    ans = res.choices[0].message.content.strip()
     return ans, None
 
 
