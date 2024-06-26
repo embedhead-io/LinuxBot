@@ -21,17 +21,14 @@ OPENAI_TEMPERATURE = 0.8
 # OpenAI Models
 OPENAI_MODELS = [
     "gpt-4o",
+    "gpt-4o-2024-05-13",
     "gpt-4-turbo",
     "gpt-4",
-    "gpt-3.5-turbo-16k",
-    "gpt-4-0613",
-    "gpt-3.5-turbo-16k-0613",
-    "gpt-4-0125-preview",
-    "gpt-4o",
+    "gpt-3.5-turbo",
 ]
 
 # OpenAI Model Configurations
-FAST_MODEL = "gpt-4o"
+FAST_MODEL = "gpt-4-turbo"
 SLOW_MODEL = "gpt-4o"
 DEFAULT_MODEL = SLOW_MODEL
 OPENAI_MODEL = SLOW_MODEL
