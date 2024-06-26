@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-
 import pytz
 from datetime import datetime
 
@@ -15,8 +14,10 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # OpenAI Configurations
-OPENAI_RETRY_LIMIT = 3
-OPENAI_TEMPERATURE = 0.8
+OPENAI_RETRY_LIMIT = 0
+OPENAI_BASE_DELAY = 2
+OPENAI_MAX_DELAY = 10
+OPENAI_JITTER = 0.5
 
 # OpenAI Models
 OPENAI_MODELS = [
@@ -142,3 +143,9 @@ OPENAI_SYSTEM_INSTRUCTIONS = {
     - I dislike disclaimers regarding seeking legal, medical, or other professional advice.
     """,
 }
+
+# Configuration constants
+MAINTENANCE_MESSAGE = (
+    "Sorry, Opal is currently undergoing maintenance. Please try again later."
+)
+ERROR_MESSAGE = "Sorry, something went wrong. Please try again."

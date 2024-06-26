@@ -1,19 +1,16 @@
-## utils.py
 import logging
 import openai
 import random
 import time
-
-from config import (
+from ..llm.config import (
     ERROR_MESSAGE,
-)
-from llm import (
     DEFAULT_MODEL,
     OPENAI_RETRY_LIMIT,
     OPENAI_SYSTEM_INSTRUCTIONS,
     OPENAI_SYSTEM_MESSAGE,
     OPENAI_TEMPERATURE,
 )
+
 
 logging.basicConfig(level=logging.DEBUG)
 
