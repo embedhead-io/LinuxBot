@@ -1,3 +1,6 @@
+# Stylesheets for Light and Dark Modes
+
+# Light Mode Stylesheet
 light_mode_stylesheet = """
 QMainWindow {
     background-color: #F0F0F0;
@@ -34,6 +37,7 @@ QListWidget {
 }
 """
 
+# Dark Mode Stylesheet
 dark_mode_stylesheet = """
 QMainWindow {
     background-color: #1E1E1E;

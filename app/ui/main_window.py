@@ -16,6 +16,8 @@ from PyQt5.QtWidgets import (
     QDialog,
     QAction,
     QMenu,
+    QMessageBox,
+    QInputDialog,
 )
 from PyQt5.QtGui import (
     QFont,
@@ -38,17 +40,18 @@ class OpalApp(QMainWindow):
         super().__init__()
         self.mutex = threading.Lock()
         self.bot_thread_per_chat = {}
-        self.chat_log = {"(New Chat)": []}
+        self.chat_log = {"(New Chat)": [OPENAI_SYSTEM_MESSAGE]}
         self.current_chat = "(New Chat)"
-        self.CHAT_LOG_DIR = ".chat_logs"
+        self.CHAT_LOG_DIR = "chat_logs"
         self.is_dark_mode = False
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
+        self.changes_made = False  # Track unsaved changes
 
     def init_ui(self):
         self.setWindowTitle("Opal")
-        self.setGeometry(50, 50, 700, 625)
+        self.setGeometry(50, 50, 800, 625)  # Make the window wider
         self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
@@ -61,9 +64,17 @@ class OpalApp(QMainWindow):
             self.model_selector.setCurrentIndex(index)
 
     def apply_ui_settings(self):
-        if True:
-            self.hide_panels()
+        # Ensure panels are visible at startup
+        self.show_panels()
         self.set_app_stylesheet()
+
+    def show_panels(self):
+        self.chats_list_widget.show()
+        self.model_selector.show()
+        self.new_chat_button.show()
+        self.rename_chat_button.show()
+        self.delete_chat_button.show()
+        self.toggle_button.setText("<")
 
     def hide_panels(self):
         self.chats_list_widget.hide()
@@ -168,7 +179,11 @@ class OpalApp(QMainWindow):
 
         self.main_layout = QHBoxLayout()
         self.main_layout.addLayout(self.left_layout)
-        self.main_layout.addLayout(self.chat_layout)
+        self.main_layout.addLayout(
+            self.chat_layout, 5
+        )  # Give the chat layout more space
+        self.main_layout.setStretch(0, 1)  # Set the left layout to take 1 part
+        self.main_layout.setStretch(1, 5)  # Set the chat layout to take 5 parts
 
         self.main_widget = QWidget()
         self.main_widget.setLayout(self.main_layout)
@@ -201,6 +216,7 @@ class OpalApp(QMainWindow):
             self.chat_log[self.current_chat].append(
                 {"role": "user", "content": user_message}
             )
+            self.changes_made = True  # Mark changes as made
             if self.current_chat not in self.bot_thread_per_chat:
                 self.bot_thread_per_chat[self.current_chat] = BotThread(
                     user_message, self.chat_log[self.current_chat], selected_model
@@ -212,13 +228,16 @@ class OpalApp(QMainWindow):
                     self.reset_status
                 )
             else:
-                self.bot_thread_per_chat[self.current_chat].user_message = user_message
-                self.bot_thread_per_chat[self.current_chat].chat_log = self.chat_log[
-                    self.current_chat
-                ]
-                self.bot_thread_per_chat[
-                    self.current_chat
-                ].selected_model = selected_model
+                with self.mutex:
+                    self.bot_thread_per_chat[
+                        self.current_chat
+                    ].user_message = user_message
+                    self.bot_thread_per_chat[
+                        self.current_chat
+                    ].chat_log = self.chat_log[self.current_chat]
+                    self.bot_thread_per_chat[
+                        self.current_chat
+                    ].selected_model = selected_model
             self.bot_thread_per_chat[self.current_chat].start()
 
     def post_message(self, message, sender="user", url=""):
@@ -233,6 +252,7 @@ class OpalApp(QMainWindow):
         self.save_chat_history(
             self.current_chat, {"role": sender, "content": message, "url": url}
         )
+        self.changes_made = False  # Reset changes made flag
         self.update_ui(message, sender, url)
 
     def reset_status(self):
@@ -241,7 +261,7 @@ class OpalApp(QMainWindow):
     def create_new_chat(self):
         chat_name = "New Chat " + str(len(self.chat_log) + 1)
         self.chats_list_widget.addItem(chat_name)
-        self.chat_log[chat_name] = []
+        self.chat_log[chat_name] = [OPENAI_SYSTEM_MESSAGE]
         self.switch_chat(chat_name)
         self.chat_input.setFocus()
 
@@ -273,14 +293,20 @@ class OpalApp(QMainWindow):
                     old_chat_log_path = os.path.join(
                         self.CHAT_LOG_DIR, f"{old_name}.json"
                     )
-                    with open(old_chat_log_path, "r") as f:
-                        old_chat_log = json.load(f)
-                        with open(
-                            os.path.join(self.CHAT_LOG_DIR, f"{new_name}.json"), "w"
-                        ) as f:
+                    new_chat_log_path = os.path.join(
+                        self.CHAT_LOG_DIR, f"{new_name}.json"
+                    )
+                    try:
+                        with open(old_chat_log_path, "r") as f:
+                            old_chat_log = json.load(f)
+                        with open(new_chat_log_path, "w") as f:
                             json.dump(old_chat_log, f)
-                    if os.path.exists(old_chat_log_path):
-                        os.remove(old_chat_log_path)
+                        if os.path.exists(old_chat_log_path):
+                            os.remove(old_chat_log_path)
+                    except (FileNotFoundError, json.JSONDecodeError, IOError) as e:
+                        QMessageBox.critical(
+                            self, "Error", f"Failed to rename chat: {e}"
+                        )
 
     def switch_chat(self, chat_name, update_ui=True):
         if chat_name:
@@ -310,27 +336,18 @@ class OpalApp(QMainWindow):
                 self.chats_list_widget.setCurrentRow(self.chats_list_widget.count() - 1)
 
     def cycle_through_chats(self):
-        current_row = self.chats_list_widget.currentRow()
-        next_row = (current_row + 1) % self.chats_list_widget.count()
-        self.chats_list_widget.setCurrentRow(next_row)
-        new_item = self.chats_list_widget.item(next_row)
-        self.switch_chat(new_item.text())
+        if self.chats_list_widget.count() > 0:
+            current_row = self.chats_list_widget.currentRow()
+            next_row = (current_row + 1) % self.chats_list_widget.count()
+            self.chats_list_widget.setCurrentRow(next_row)
+            new_item = self.chats_list_widget.item(next_row)
+            self.switch_chat(new_item.text())
 
     def toggle_left_panel(self):
         if self.chats_list_widget.isVisible():
-            self.chats_list_widget.hide()
-            self.model_selector.hide()
-            self.new_chat_button.hide()
-            self.rename_chat_button.hide()
-            self.delete_chat_button.hide()
-            self.toggle_button.setText(">")
+            self.hide_panels()
         else:
-            self.chats_list_widget.show()
-            self.model_selector.show()
-            self.new_chat_button.show()
-            self.rename_chat_button.show()
-            self.delete_chat_button.show()
-            self.toggle_button.setText("<")
+            self.show_panels()
 
     def adjust_input_size(self):
         doc_height = self.chat_input.document().size().toSize().height()
@@ -445,8 +462,72 @@ class OpalApp(QMainWindow):
         self.chat_input.setFocus()
 
     def closeEvent(self, event):
-        if self.current_chat == "(New Chat)":
-            file_path = os.path.join(self.CHAT_LOG_DIR, f"{self.current_chat}.json")
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        event.accept()
+        if self.changes_made:
+            if self.current_chat == "(New Chat)":
+                reply = QMessageBox.question(
+                    self,
+                    "Unsaved Changes",
+                    "You have unsaved changes in '(New Chat)'. Do you want to save them before exiting?",
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                    QMessageBox.Save,
+                )
+                if reply == QMessageBox.Save:
+                    if self.rename_and_save_new_chat():
+                        event.accept()
+                    else:
+                        event.ignore()
+                elif reply == QMessageBox.Discard:
+                    self.delete_new_chat_file()
+                    event.accept()
+                else:
+                    event.ignore()
+            else:
+                reply = QMessageBox.question(
+                    self,
+                    "Unsaved Changes",
+                    "You have unsaved changes. Do you want to save them before exiting?",
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                    QMessageBox.Save,
+                )
+                if reply == QMessageBox.Save:
+                    self.save_chat_history(
+                        self.current_chat,
+                        {"role": "system", "content": "Chat saved on exit"},
+                    )
+                    event.accept()
+                elif reply == QMessageBox.Discard:
+                    event.accept()
+                else:
+                    event.ignore()
+        else:
+            event.accept()
+
+    def rename_and_save_new_chat(self):
+        new_chat_name, ok = QInputDialog.getText(
+            self, "Save Chat", "Enter a name for the new chat:"
+        )
+        if ok and new_chat_name:
+            self.chat_log[new_chat_name] = self.chat_log.pop("(New Chat)")
+            self.current_chat = new_chat_name
+            self.save_chat_history(
+                self.current_chat, {"role": "system", "content": "Chat saved on exit"}
+            )
+            self.update_chat_list(new_chat_name)
+            return True
+        return False
+
+    def delete_new_chat_file(self):
+        chat_log_path = os.path.join(self.CHAT_LOG_DIR, "(New Chat).json")
+        if os.path.exists(chat_log_path):
+            os.remove(chat_log_path)
+        if "(New Chat)" in self.chat_log:
+            del self.chat_log["(New Chat)"]
+
+    def update_chat_list(self, new_chat_name):
+        items = [
+            self.chats_list_widget.item(i).text()
+            for i in range(self.chats_list_widget.count())
+        ]
+        if new_chat_name not in items:
+            self.chats_list_widget.addItem(new_chat_name)
+            self.chats_list_widget.setCurrentRow(self.chats_list_widget.count() - 1)

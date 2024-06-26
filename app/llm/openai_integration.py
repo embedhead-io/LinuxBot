@@ -1,6 +1,7 @@
 import openai
 import logging
-
+import time
+import random
 from .config import (
     DEFAULT_MODEL,
     OPENAI_API_KEY,
@@ -9,18 +10,22 @@ from .config import (
     OPENAI_RETRY_LIMIT,
 )
 
-client = openai.OpenAI()
+# Configure the OpenAI client with the API key
+openai.api_key = OPENAI_API_KEY
+
+RETRY_LIMIT = 3  # Define retry limit as a constant
 
 
-def ask_llm(chat_log):
+def ask_llm(chat_log, selected_model):
+    """Function to interact with the OpenAI API, with retry logic for error handling."""
     ans, url = None, None
-    retries = OPENAI_RETRY_LIMIT
+    retries = 0
     base_delay = OPENAI_BASE_DELAY
     jitter = OPENAI_JITTER
 
-    while ans is None and retries < 3:
+    while ans is None and retries < RETRY_LIMIT:
         try:
-            ans, url = generate_text(chat_log)
+            ans, url = generate_text(chat_log, selected_model)
         except openai.APIConnectionError as e:
             logging.error(f"OpenAI API error: {e}")
             retries += 1
@@ -35,10 +40,11 @@ def ask_llm(chat_log):
     return ans.strip(), url
 
 
-def generate_text(chat_log):
-    res = client.chat.completions.create(
+def generate_text(chat_log, selected_model=DEFAULT_MODEL):
+    """Generate a response from the OpenAI API based on the given chat log."""
+    res = openai.ChatCompletion.create(
         model=DEFAULT_MODEL,
         messages=chat_log,
     )
-    ans = res.choices[0].message.content.strip()
+    ans = res.choices[0].message["content"].strip()
     return ans, None

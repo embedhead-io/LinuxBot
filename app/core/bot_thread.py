@@ -16,9 +16,12 @@ class BotThread(QThread):
 
     def run(self):
         try:
+            # Process the message and get the response
             response_message, url, self.chat_log = process_message(
-                self.user_message, self.chat_log
+                self.user_message, self.chat_log, self.selected_model
             )
+            # Emit the new message signal with the response
             self.new_message.emit(response_message, "assistant", "", url if url else "")
         except Exception as e:
-            logging.error(f"Error generating response: {e}")
+            # Log detailed error information
+            logging.error(f"Error generating response: {e}", exc_info=True)
