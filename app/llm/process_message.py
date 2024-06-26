@@ -2,7 +2,7 @@ from .openai_integration import ask_llm
 from .config import OPENAI_SYSTEM_MESSAGE, OPENAI_SYSTEM_INSTRUCTIONS
 
 
-def process_message(user_message, chat_log, selected_model):
+def process_message(user_message, chat_log):
     """
     Processes a user message by interacting with the OpenAI API and updating the chat log.
 
@@ -28,7 +28,7 @@ def process_message(user_message, chat_log, selected_model):
         chat_log[0] = OPENAI_SYSTEM_MESSAGE
 
     # Get the response from the OpenAI API
-    ans, url = ask_llm(chat_log, selected_model)
+    ans, url = ask_llm(chat_log)
 
     # Append the assistant's response to the chat log
     chat_log.append({"role": "assistant", "content": ans})

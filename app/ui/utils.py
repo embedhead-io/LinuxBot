@@ -7,7 +7,6 @@ import time
 from ..llm.config import (
     ERROR_MESSAGE,
     DEFAULT_MODEL,
-    OPENAI_API_KEY,
     OPENAI_RETRY_LIMIT,
     OPENAI_SYSTEM_INSTRUCTIONS,
     OPENAI_SYSTEM_MESSAGE,
