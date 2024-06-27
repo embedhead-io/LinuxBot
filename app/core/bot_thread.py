@@ -1,6 +1,6 @@
 import logging
 from PyQt5.QtCore import QThread, pyqtSignal
-from ..llm.process_message import process_message
+from app.llm.process_message import process_message
 
 logging.basicConfig(level=logging.DEBUG)
 
