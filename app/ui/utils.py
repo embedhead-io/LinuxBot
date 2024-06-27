@@ -1,7 +1,5 @@
 import logging
-from openai import OpenAI
-
-client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+import openai
 import random
 import time
 from ..llm.config import (
@@ -13,10 +11,10 @@ from ..llm.config import (
     OPENAI_TEMPERATURE,
 )
 
+
 logging.basicConfig(level=logging.DEBUG)
 
-# Configure the OpenAI client with the API key
-# Ensure to replace with actual API key
+client = openai.OpenAI()
 
 
 # Utility functions to work with data and handle retries
@@ -45,7 +43,7 @@ def handle_retry(
 # Functions to interact with OpenAI's API for generating responses
 def ask_llm(chat_log: list):
     """
-    Generate a response using the OpenAI API with retry logic.
+    Generate a response using either the OpenAI API or the Replicate API based on the user's message.
 
     Parameters:
     chat_log (list): The chat log containing the conversation history.
@@ -88,20 +86,22 @@ def generate_text(chat_log: list):
     tuple: The generated response message and None (since no URL is generated in this function).
     """
     res = client.chat.completions.create(
-        model=DEFAULT_MODEL, messages=chat_log, temperature=OPENAI_TEMPERATURE
+        model=DEFAULT_MODEL,
+        messages=chat_log,
+        temperature=OPENAI_TEMPERATURE,
     )
     ans = res.choices[0].message.content.strip()
     return ans, None
 
 
 # Functions to work with the chat log
-def trim_chat_log(chat_log: list, max_length: int = 100) -> list:
+def trim_chat_log(chat_log: list, max_length: int = 100):
     """
     Trim the chat log to a maximum length.
 
     Parameters:
     chat_log (list): The chat log to trim.
-    max_length (int, optional): The maximum length of the chat log. Defaults to 100.
+    max_length (int, optional): The maximum length of the chat log. Defaults to 10.
 
     Returns:
     list: The trimmed chat log.
@@ -111,9 +111,9 @@ def trim_chat_log(chat_log: list, max_length: int = 100) -> list:
     return chat_log
 
 
-def append_to_chat_log(role: str, content: str, chat_log: list = None) -> list:
+def append_to_chat_log(role: str, content: str, chat_log: list = []) -> list:
     """
-    Append a message to the chat log.
+    Appends a message to the chat log.
 
     Parameters:
     role (str): The role (user or assistant) of the message sender.
@@ -123,13 +123,11 @@ def append_to_chat_log(role: str, content: str, chat_log: list = None) -> list:
     Returns:
     list: The updated chat log with the new message appended.
     """
-    if chat_log is None:
-        chat_log = []
     chat_log.append({"role": role, "content": content})
     return chat_log
 
 
-def process_message(user_message: str, chat_log: list = None):
+def process_message(user_message: str, chat_log: list = []):
     """
     Process the user's message and return a response.
 
@@ -140,19 +138,18 @@ def process_message(user_message: str, chat_log: list = None):
     Returns:
     tuple: The response message, a URL if applicable, and the updated chat log.
     """
-    if chat_log is None:
-        chat_log = []
-
-    # If the chat log is empty, initialize with the system message
+    # If the chat log is an empty list, set chat_log[0] equal to the OPENAI_SYSTEM_MESSAGE.
     if len(chat_log) == 0:
         chat_log.append(OPENAI_SYSTEM_MESSAGE)
 
     # Append the user's message to the chat log
     chat_log = append_to_chat_log("user", user_message, chat_log)
 
-    # Set system instructions based on the user's message
+    # If the user's message begins with "?", set chat_log[0] equal to the OPENAI_SYSTEM_INSTRUCTIONS. Otherwise, default to OPENAI_SYSTEM_MESSAGE.
     if user_message.startswith("?"):
         chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
+    elif user_message.startswith("!"):
+        chat_log[0] = OPENAI_COMEDY_SYSTEM_MESSAGE
     else:
         chat_log[0] = OPENAI_SYSTEM_MESSAGE
 

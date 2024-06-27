@@ -12,14 +12,12 @@ load_dotenv()
 
 # OpenAI API Configurations
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise EnvironmentError("Missing OPENAI_API_KEY in environment variables")
 
 # OpenAI Configurations
+OPENAI_RETRY_LIMIT = 0
 OPENAI_BASE_DELAY = 2
+OPENAI_MAX_DELAY = 10
 OPENAI_JITTER = 0.5
-OPENAI_RETRY_LIMIT = 3
-OPENAI_TEMPERATURE = 0.8
 
 # OpenAI Models
 OPENAI_MODELS = [
