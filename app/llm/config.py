@@ -12,6 +12,8 @@ load_dotenv()
 
 # OpenAI API Configurations
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise EnvironmentError("Missing OPENAI_API_KEY in environment variables")
 
 # OpenAI Configurations
 OPENAI_BASE_DELAY = 2
