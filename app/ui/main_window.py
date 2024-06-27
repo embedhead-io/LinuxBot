@@ -40,7 +40,7 @@ class OpalApp(QMainWindow):
         self.bot_thread_per_chat = {}
         self.chat_log = {"(New Chat)": []}
         self.current_chat = "(New Chat)"
-        self.CHAT_LOG_DIR = ".chat_logs"
+        self.CHAT_LOG_DIR = "app/.chat_logs"
         self.is_dark_mode = False
         self.init_ui()
         self.load_chat_history()
@@ -239,7 +239,8 @@ class OpalApp(QMainWindow):
         self.status_label.setText("Status: Ready")
 
     def create_new_chat(self):
-        chat_name = "New Chat " + str(len(self.chat_log) + 1)
+        # chat_name = "New Chat " + str(len(self.chat_log) + 1)
+        chat_name = "(New Chat)"
         self.chats_list_widget.addItem(chat_name)
         self.chat_log[chat_name] = []
         self.switch_chat(chat_name)
