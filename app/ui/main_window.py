@@ -30,7 +30,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from app.core.bot_thread import BotThread
 from app.core.custom_text_edit import CustomTextEdit
 from app.core.status_label import StatusLabel
-from app.llm.config import OPENAI_SYSTEM_MESSAGE
+from app.llm.config import DEFAULT_MODEL, OPENAI_MODELS, OPENAI_SYSTEM_MESSAGE
 
 
 class OpalApp(QMainWindow):
@@ -56,7 +56,7 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.switch_chat(self.current_chat)
         self.set_app_stylesheet()
-        index = self.model_selector.findText("default-model", Qt.MatchFixedString)
+        index = self.model_selector.findText("gpt-4o", Qt.MatchFixedString)
         if index >= 0:
             self.model_selector.setCurrentIndex(index)
 
@@ -125,7 +125,7 @@ class OpalApp(QMainWindow):
 
         self.model_selector = QComboBox()
         self.model_selector.setFont(font)
-        self.model_selector.addItems(["default-model"])
+        self.model_selector.addItems([model for model in OPENAI_MODELS])
 
         self.new_chat_button = QPushButton("New Chat")
         self.new_chat_button.setFont(font)

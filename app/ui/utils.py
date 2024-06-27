@@ -10,7 +10,7 @@ from ..llm.config import (
     OPENAI_SYSTEM_MESSAGE,
     OPENAI_TEMPERATURE,
 )
-
+from ..llm.openai_integration import generate_text, ask_llm, process_message
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -40,58 +40,58 @@ def handle_retry(
     return retries
 
 
-# Functions to interact with OpenAI's API for generating responses
-def ask_llm(chat_log: list):
-    """
-    Generate a response using either the OpenAI API or the Replicate API based on the user's message.
+# # Functions to interact with OpenAI's API for generating responses
+# def ask_llm(chat_log: list):
+#     """
+#     Generate a response using either the OpenAI API or the Replicate API based on the user's message.
 
-    Parameters:
-    chat_log (list): The chat log containing the conversation history.
+#     Parameters:
+#     chat_log (list): The chat log containing the conversation history.
 
-    Returns:
-    tuple: The response message and a URL if applicable.
-    """
-    ans = None
-    url = None
+#     Returns:
+#     tuple: The response message and a URL if applicable.
+#     """
+#     ans = None
+#     url = None
 
-    retries = 0
-    base_delay = 2
-    max_delay = 10
-    jitter = 0.5
+#     retries = 0
+#     base_delay = 2
+#     max_delay = 10
+#     jitter = 0.5
 
-    while ans is None and retries < OPENAI_RETRY_LIMIT:
-        try:
-            ans, url = generate_text(chat_log)
-        except openai.APIConnectionError as e:
-            logging.error(f"OpenAI API error: {e}")
-            retries = handle_retry(retries, base_delay, max_delay, jitter)
-        except Exception as e:
-            logging.error(f"Unexpected error: {e}")
-            break
+#     while ans is None and retries < OPENAI_RETRY_LIMIT:
+#         try:
+#             ans, url = generate_text(chat_log)
+#         except openai.APIConnectionError as e:
+#             logging.error(f"OpenAI API error: {e}")
+#             retries = handle_retry(retries, base_delay, max_delay, jitter)
+#         except Exception as e:
+#             logging.error(f"Unexpected error: {e}")
+#             break
 
-    if ans is None:
-        ans = ERROR_MESSAGE
+#     if ans is None:
+#         ans = ERROR_MESSAGE
 
-    return ans.strip(), url
+#     return ans.strip(), url
 
 
-def generate_text(chat_log: list):
-    """
-    Generate a text response using the OpenAI API.
+# def generate_text(chat_log: list):
+#     """
+#     Generate a text response using the OpenAI API.
 
-    Parameters:
-    chat_log (list): The chat log containing the conversation history.
+#     Parameters:
+#     chat_log (list): The chat log containing the conversation history.
 
-    Returns:
-    tuple: The generated response message and None (since no URL is generated in this function).
-    """
-    res = client.chat.completions.create(
-        model=DEFAULT_MODEL,
-        messages=chat_log,
-        temperature=OPENAI_TEMPERATURE,
-    )
-    ans = res.choices[0].message.content.strip()
-    return ans, None
+#     Returns:
+#     tuple: The generated response message and None (since no URL is generated in this function).
+#     """
+#     res = client.chat.completions.create(
+#         model=DEFAULT_MODEL,
+#         messages=chat_log,
+#         temperature=OPENAI_TEMPERATURE,
+#     )
+#     ans = res.choices[0].message.content.strip()
+#     return ans, None
 
 
 # Functions to work with the chat log
@@ -127,37 +127,37 @@ def append_to_chat_log(role: str, content: str, chat_log: list = []) -> list:
     return chat_log
 
 
-def process_message(user_message: str, chat_log: list = []):
-    """
-    Process the user's message and return a response.
+# def process_message(user_message: str, chat_log: list = []):
+#     """
+#     Process the user's message and return a response.
 
-    Parameters:
-    user_message (str): The message from the user.
-    chat_log (list, optional): The chat log containing the conversation history. Defaults to None.
+#     Parameters:
+#     user_message (str): The message from the user.
+#     chat_log (list, optional): The chat log containing the conversation history. Defaults to None.
 
-    Returns:
-    tuple: The response message, a URL if applicable, and the updated chat log.
-    """
-    # If the chat log is an empty list, set chat_log[0] equal to the OPENAI_SYSTEM_MESSAGE.
-    if len(chat_log) == 0:
-        chat_log.append(OPENAI_SYSTEM_MESSAGE)
+#     Returns:
+#     tuple: The response message, a URL if applicable, and the updated chat log.
+#     """
+#     # If the chat log is an empty list, set chat_log[0] equal to the OPENAI_SYSTEM_MESSAGE.
+#     if len(chat_log) == 0:
+#         chat_log.append(OPENAI_SYSTEM_MESSAGE)
 
-    # Append the user's message to the chat log
-    chat_log = append_to_chat_log("user", user_message, chat_log)
+#     # Append the user's message to the chat log
+#     chat_log = append_to_chat_log("user", user_message, chat_log)
 
-    # If the user's message begins with "?", set chat_log[0] equal to the OPENAI_SYSTEM_INSTRUCTIONS. Otherwise, default to OPENAI_SYSTEM_MESSAGE.
-    if user_message.startswith("?"):
-        chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
-    else:
-        chat_log[0] = OPENAI_SYSTEM_MESSAGE
+#     # If the user's message begins with "?", set chat_log[0] equal to the OPENAI_SYSTEM_INSTRUCTIONS. Otherwise, default to OPENAI_SYSTEM_MESSAGE.
+#     if user_message.startswith("?"):
+#         chat_log[0] = OPENAI_SYSTEM_INSTRUCTIONS
+#     else:
+#         chat_log[0] = OPENAI_SYSTEM_MESSAGE
 
-    # Generate a response
-    ans, url = ask_llm(chat_log)
+#     # Generate a response
+#     ans, url = ask_llm(chat_log)
 
-    # Append the response to the chat log
-    chat_log = append_to_chat_log("assistant", ans, chat_log)
+#     # Append the response to the chat log
+#     chat_log = append_to_chat_log("assistant", ans, chat_log)
 
-    # Trim the chat log
-    chat_log = trim_chat_log(chat_log)
+#     # Trim the chat log
+#     chat_log = trim_chat_log(chat_log)
 
-    return ans, url, chat_log
+#     return ans, url, chat_log

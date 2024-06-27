@@ -12,7 +12,7 @@ from .config import (
 client = openai.OpenAI()
 
 
-def ask_llm(chat_log):
+def ask_llm(chat_log, model=DEFAULT_MODEL):
     ans, url = None, None
     retries = OPENAI_RETRY_LIMIT
     base_delay = OPENAI_BASE_DELAY
@@ -20,7 +20,7 @@ def ask_llm(chat_log):
 
     while ans is None and retries < 3:
         try:
-            ans, url = generate_text(chat_log)
+            ans, url = generate_text(chat_log, model)
         except openai.APIConnectionError as e:
             logging.error(f"OpenAI API error: {e}")
             retries += 1
@@ -35,9 +35,9 @@ def ask_llm(chat_log):
     return ans.strip(), url
 
 
-def generate_text(chat_log):
+def generate_text(chat_log, model=DEFAULT_MODEL):
     res = client.chat.completions.create(
-        model=DEFAULT_MODEL,
+        model=model,
         messages=chat_log,
     )
     ans = res.choices[0].message.content.strip()
