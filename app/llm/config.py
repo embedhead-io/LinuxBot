@@ -22,7 +22,6 @@ OPENAI_JITTER = 0.5
 # OpenAI Models
 OPENAI_MODELS = [
     "gpt-4o",
-    "gpt-4o-2024-05-13",
     "gpt-4-turbo",
     "gpt-4",
     "gpt-3.5-turbo",
