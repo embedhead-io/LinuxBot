@@ -13,8 +13,8 @@ def process_message(user_message, chat_log, model=DEFAULT_MODEL):
     else:
         chat_log[0] = OPENAI_SYSTEM_MESSAGE
 
-    ans, url = ask_llm(chat_log, model)
+    ans, url, model_used = ask_llm(chat_log, model)
 
     chat_log.append({"role": "assistant", "content": ans})
 
-    return ans, url, chat_log
+    return ans, url, chat_log, model_used
