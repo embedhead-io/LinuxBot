@@ -21,15 +21,14 @@ OPENAI_JITTER = 0.5
 
 # OpenAI Models
 OPENAI_MODELS = [
-    "gpt-4o",
-    "gpt-4-turbo",
     "gpt-4",
+    "gpt-4o",
     "gpt-3.5-turbo",
 ]
 
 # OpenAI Model Configurations
-FAST_MODEL = "gpt-4-turbo"
-SLOW_MODEL = "gpt-4o"
+FAST_MODEL = "gpt-4o"
+SLOW_MODEL = "gpt-4"
 DEFAULT_MODEL = SLOW_MODEL
 
 # OpenAI System Messages
