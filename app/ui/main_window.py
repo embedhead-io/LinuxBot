@@ -239,7 +239,6 @@ class OpalApp(QMainWindow):
         self.status_label.setText("Status: Ready")
 
     def create_new_chat(self):
-        # chat_name = "New Chat " + str(len(self.chat_log) + 1)
         chat_name = "(New Chat)"
         self.chats_list_widget.addItem(chat_name)
         self.chat_log[chat_name] = []
@@ -358,14 +357,25 @@ class OpalApp(QMainWindow):
             else QColor.fromRgb(0, 0, 0, 65)
         )
         cursor.insertFrame(frame_format)
+
+        # Create paragraph format
+        para_format = cursor.blockFormat()
+        para_format.setAlignment(Qt.AlignRight if sender == "user" else Qt.AlignLeft)
+        cursor.setBlockFormat(para_format)
+
+        # Insert sender name
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Bold)
-        prefix = "Me \n\n" if sender == "user" else "Opal \n\n"
+        prefix = "Me \n" if sender == "user" else "Opal \n"
         cursor.insertText(prefix, char_format)
+
+        # Insert message
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Normal)
         cursor.insertText(message, char_format)
+
+        # Insert URL if provided
         if url:
             cursor.insertText(" (URL: ", char_format)
             url_format = QTextCharFormat()
@@ -377,6 +387,7 @@ class OpalApp(QMainWindow):
             url_format.setForeground(QColor.fromRgb(0, 0, 255))
             cursor.insertText(url, url_format)
             cursor.insertText(")", char_format)
+
         cursor.movePosition(QTextCursor.End)
         self.chat_log_display.setTextCursor(cursor)
         self.chat_log_display.verticalScrollBar().setValue(
