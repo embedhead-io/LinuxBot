@@ -43,14 +43,14 @@ class OpalApp(QMainWindow):
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "app/.chat_logs"
         self.is_dark_mode = False
-        self.sidebar_width = 200
+        self.sidebar_width = 140
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
 
     def init_ui(self):
         self.setWindowTitle("Opal")
-        self.setGeometry(50, 50, 800, 500)
+        self.setGeometry(50, 50, 1000, 700)
         self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
@@ -382,7 +382,7 @@ class OpalApp(QMainWindow):
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Bold)
-        prefix = "<b>Me:</b><br>" if sender == "user" else "<b>Opal:</b><br>"
+        prefix = "<b>Me:</b>" if sender == "user" else "<b>Opal:</b>"
         cursor.insertHtml(prefix + html_message)
 
         if url:
