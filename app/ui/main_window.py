@@ -1,5 +1,6 @@
 import os
 import json
+import markdown
 import threading
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -358,26 +359,15 @@ class OpalApp(QMainWindow):
         )
         cursor.insertFrame(frame_format)
 
-        # Create paragraph format
-        para_format = cursor.blockFormat()
-        para_format.setAlignment(Qt.AlignRight if sender == "user" else Qt.AlignLeft)
-        cursor.setBlockFormat(para_format)
-
-        # Insert sender name
+        # Convert Markdown message to HTML and insert it
+        html_message = markdown.markdown(message)
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
         char_format.setFontWeight(QFont.Bold)
-        prefix = "Me \n" if sender == "user" else "Opal \n"
-        cursor.insertText(prefix, char_format)
+        prefix = "<b>Me:</b><br>" if sender == "user" else "<b>Opal:</b><br>"
+        cursor.insertHtml(prefix + html_message)
 
-        # Insert message
-        char_format.setFontPointSize(10)
-        char_format.setFontWeight(QFont.Normal)
-        cursor.insertText(message, char_format)
-
-        # Insert URL if provided
         if url:
-            cursor.insertText(" (URL: ", char_format)
             url_format = QTextCharFormat()
             url_format.setFontPointSize(10)
             url_format.setFontWeight(QFont.Bold)
@@ -385,6 +375,7 @@ class OpalApp(QMainWindow):
             url_format.setAnchor(True)
             url_format.setAnchorHref(url)
             url_format.setForeground(QColor.fromRgb(0, 0, 255))
+            cursor.insertText(" (URL: ", char_format)
             cursor.insertText(url, url_format)
             cursor.insertText(")", char_format)
 
