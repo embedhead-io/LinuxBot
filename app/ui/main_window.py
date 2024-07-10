@@ -43,13 +43,14 @@ class OpalApp(QMainWindow):
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "app/.chat_logs"
         self.is_dark_mode = False
+        self.sidebar_width = 200
         self.init_ui()
         self.load_chat_history()
         self.apply_ui_settings()
 
     def init_ui(self):
         self.setWindowTitle("Opal")
-        self.setGeometry(50, 50, 600, 500)
+        self.setGeometry(50, 50, 800, 500)
         self.create_shortcuts()
         self.create_widgets()
         self.create_layouts()
@@ -160,6 +161,11 @@ class OpalApp(QMainWindow):
         self.left_layout.addWidget(self.new_chat_button)
         self.left_layout.addWidget(self.rename_chat_button)
         self.left_layout.addWidget(self.delete_chat_button)
+        self.left_layout.addStretch(1)
+
+        self.sidebar_widget = QWidget()
+        self.sidebar_widget.setLayout(self.left_layout)
+        self.sidebar_widget.setFixedWidth(self.sidebar_width)
 
         self.chat_layout = QVBoxLayout()
         self.chat_layout.addWidget(self.chat_log_display)
@@ -168,11 +174,24 @@ class OpalApp(QMainWindow):
         self.chat_layout.addWidget(self.status_label)
 
         self.main_layout = QHBoxLayout()
-        self.main_layout.addLayout(self.left_layout)
-        self.main_layout.addLayout(self.chat_layout)
+        self.main_layout.addWidget(self.sidebar_widget, 0)
+        self.main_layout.addLayout(self.chat_layout, 1)
 
         self.main_widget = QWidget()
         self.main_widget.setLayout(self.main_layout)
+        self.setCentralWidget(self.main_widget)
+
+    def toggle_left_panel(self):
+        is_visible = self.sidebar_widget.isVisible()
+        self.sidebar_widget.setVisible(not is_visible)
+        self.toggle_button.setText(">" if is_visible else "<")
+
+    def adjust_main_window_width(self):
+        if self.sidebar_widget.isVisible():
+            new_width = self.initial_chat_width + self.sidebar_width
+        else:
+            new_width = self.initial_chat_width
+        self.setFixedWidth(new_width)
 
     def connect_signals(self):
         self.toggle_button.clicked.connect(self.toggle_left_panel)
@@ -359,7 +378,6 @@ class OpalApp(QMainWindow):
         )
         cursor.insertFrame(frame_format)
 
-        # Convert Markdown message to HTML and insert it
         html_message = markdown.markdown(message)
         char_format = QTextCharFormat()
         char_format.setFontPointSize(10)
