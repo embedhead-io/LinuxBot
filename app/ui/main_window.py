@@ -33,8 +33,6 @@ from app.core.custom_text_edit import CustomTextEdit
 from app.core.status_label import StatusLabel
 from app.llm.config import DEFAULT_MODEL, OPENAI_MODELS, OPENAI_SYSTEM_MESSAGE
 
-# OK #
-
 
 class OpalApp(QMainWindow):
     def __init__(self):
@@ -44,10 +42,9 @@ class OpalApp(QMainWindow):
         self.chat_log = {"(New Chat)": []}
         self.current_chat = "(New Chat)"
         self.CHAT_LOG_DIR = "app/.chat_logs"
-        self.is_dark_mode = False
+        self.is_dark_mode = True
         self.sidebar_width = 140
         self.init_ui()
-        # OK, Side is open #
 
     def init_ui(self):
         """Initialize the user interface."""
@@ -60,13 +57,11 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.load_chat_history()
         self.apply_ui_settings()
-        # OK, Side is closed #
 
     def apply_ui_settings(self):
         """Apply UI settings such as hiding panels and setting the stylesheet."""
         self.hide_panels()
         self.set_app_stylesheet()
-        # Updated func #
 
     def hide_panels(self):
         """Hide UI panels based on certain conditions."""
@@ -76,13 +71,11 @@ class OpalApp(QMainWindow):
         self.rename_chat_button.hide()
         self.delete_chat_button.hide()
         self.toggle_button.setText(">")
-        # Updated func #
 
     def toggle_mode(self):
         """Toggle between light and dark mode."""
         self.is_dark_mode = not self.is_dark_mode
         self.set_app_stylesheet()
-        # Updated func #
 
     def set_app_stylesheet(self):
         """Set the application stylesheet based on the current mode."""
@@ -94,7 +87,6 @@ class OpalApp(QMainWindow):
         self.mode_toggle_button.setText(
             "Light Mode" if self.is_dark_mode else "Dark Mode"
         )
-        # Updated func #
 
     def create_shortcuts(self):
         """Create keyboard shortcuts for the application."""
@@ -110,13 +102,11 @@ class OpalApp(QMainWindow):
         }
         for key_sequence, func in shortcuts.items():
             self.create_shortcut(key_sequence, func)
-            # DOES NOT OPEN WITHOUT ABOVE FUNCS #
 
     def create_shortcut(self, key_sequence, func):
         """Helper method to create a single shortcut."""
         shortcut = QShortcut(QKeySequence(key_sequence), self)
         shortcut.activated.connect(func)
-        # No change #
 
     def create_widgets(self):
         """Create and configure the widgets for the UI."""
@@ -145,7 +135,6 @@ class OpalApp(QMainWindow):
         self.chats_list_widget.setCurrentRow(0)
         self.chats_list_widget.setMaximumWidth(200)
         self.chats_list_widget.setMinimumWidth(200)
-        # No change #
 
     def create_layouts(self):
         """Create and configure the layouts for the UI."""
@@ -159,7 +148,6 @@ class OpalApp(QMainWindow):
         self.main_widget = QWidget()
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
-        # Updated func #
 
     def create_left_layout(self):
         """Create the left layout for the sidebar."""
@@ -170,9 +158,9 @@ class OpalApp(QMainWindow):
         layout.addWidget(self.new_chat_button)
         layout.addWidget(self.rename_chat_button)
         layout.addWidget(self.delete_chat_button)
+        layout.addWidget(self.mode_toggle_button)
         layout.addStretch(1)
         return layout
-        # NEW FUNC!!! #
 
     def create_button(self, text, font, callback=None):
         """Helper method to create a QPushButton."""
@@ -181,7 +169,6 @@ class OpalApp(QMainWindow):
         if callback:
             button.clicked.connect(callback)
         return button
-        # NEW FUNC!!! #
 
     def create_list_widget(self, font):
         """Helper method to create a QListWidget."""
@@ -190,14 +177,12 @@ class OpalApp(QMainWindow):
         list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         list_widget.customContextMenuRequested.connect(self.show_chat_context_menu)
         return list_widget
-        # NEW FUNC!!! #
 
     def create_text_edit(self, font, read_only=False):
         """Helper method to create a QTextEdit."""
         text_edit = QTextEdit(readOnly=read_only)
         text_edit.setFont(font)
         return text_edit
-        # NEW FUNC!!! #
 
     def create_custom_text_edit(self, font):
         """Helper method to create a CustomTextEdit."""
@@ -206,7 +191,6 @@ class OpalApp(QMainWindow):
         text_edit.textChanged.connect(self.adjust_input_size)
         text_edit.setFixedHeight(50)
         return text_edit
-        # NEW FUNC!!! #
 
     def create_combo_box(self, font, items):
         """Helper method to create a QComboBox."""
@@ -214,7 +198,6 @@ class OpalApp(QMainWindow):
         combo_box.setFont(font)
         combo_box.addItems(items)
         return combo_box
-        # NEW FUNC!!! #
 
     def create_chat_layout(self):
         """Create the main chat layout."""
@@ -224,7 +207,6 @@ class OpalApp(QMainWindow):
         layout.addWidget(self.send_button)
         layout.addWidget(self.status_label)
         return layout
-        # NEW FUNC!!! #
 
     def create_sidebar_widget(self):
         """Create the sidebar widget."""
@@ -232,7 +214,6 @@ class OpalApp(QMainWindow):
         sidebar_widget.setLayout(self.left_layout)
         sidebar_widget.setFixedWidth(self.sidebar_width)
         return sidebar_widget
-        # NEW FUNC!!! #
 
     def toggle_left_panel(self):
         if self.chats_list_widget.isVisible():
@@ -270,7 +251,6 @@ class OpalApp(QMainWindow):
                 new_item.text() if new_item else "(New Chat)"
             )
         )
-        # Updated func #
 
     @pyqtSlot()
     def send_message(self):
@@ -307,7 +287,6 @@ class OpalApp(QMainWindow):
                     self.current_chat
                 ].selected_model = selected_model
             self.bot_thread_per_chat[self.current_chat].start()
-            # Updated func #
 
     def post_message(self, message, sender="user", url=""):
         """Post a message to the chat log."""
@@ -323,12 +302,10 @@ class OpalApp(QMainWindow):
             self.current_chat, {"role": sender, "content": message, "url": url}
         )
         self.update_ui(message, sender, url)
-        # Updated func #
 
     def reset_status(self):
         """Reset the status label to ready."""
         self.status_label.setText("Status: Ready")
-        # Updated func #
 
     def create_new_chat(self):
         """Create a new chat."""
@@ -337,7 +314,6 @@ class OpalApp(QMainWindow):
         self.chat_log[chat_name] = []
         self.switch_chat(chat_name)
         self.chat_input.setFocus()
-        # Updated func #
 
     def rename_current_chat(self):
         """Rename the current chat."""
@@ -349,7 +325,6 @@ class OpalApp(QMainWindow):
                 new_name = dialog.new_name_input.text()
                 if new_name:
                     self.rename_chat(current_item, new_name)
-                    # UPDATED FUNC. VERY DIFFERENT #
 
     def create_rename_dialog(self, current_name):
         """Create a dialog to rename the chat."""
@@ -368,7 +343,6 @@ class OpalApp(QMainWindow):
         confirm_button.clicked.connect(dialog.accept)
         cancel_button.clicked.connect(dialog.reject)
         return dialog
-        # NEW FUNC!!! #
 
     def rename_chat(self, current_item, new_name):
         """Rename a chat in the chat log and update the UI."""
@@ -377,7 +351,6 @@ class OpalApp(QMainWindow):
         self.chat_log[new_name] = self.chat_log.pop(old_name, [])
         self.switch_chat(new_name)
         self.update_chat_log_file(old_name, new_name)
-        # NEW FUNC!!! #
 
     def update_chat_log_file(self, old_name, new_name):
         """Update the chat log file to reflect the new chat name."""
@@ -392,7 +365,6 @@ class OpalApp(QMainWindow):
                 os.remove(old_chat_log_path)
         except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
             print(f"Error updating chat log file: {e}")
-        # NEW FUNC!!! #
 
     def switch_chat(self, chat_name, update_ui=True):
         """Switch to a different chat."""
@@ -421,7 +393,6 @@ class OpalApp(QMainWindow):
             else:
                 self.chats_list_widget.addItem(chat_name)
                 self.chats_list_widget.setCurrentRow(self.chats_list_widget.count() - 1)
-        # Updated func #
 
     def cycle_through_chats(self):
         """Cycle through chats using Ctrl+B."""
@@ -430,7 +401,6 @@ class OpalApp(QMainWindow):
         self.chats_list_widget.setCurrentRow(next_row)
         new_item = self.chats_list_widget.item(next_row)
         self.switch_chat(new_item.text())
-        # Updated func #
 
     def adjust_input_size(self):
         """Adjust the input text edit size based on content."""
@@ -439,7 +409,6 @@ class OpalApp(QMainWindow):
         max_height = 150
         if self.chat_input.height() > max_height:
             self.chat_input.setFixedHeight(max_height)
-        # Updated func #
 
     def update_ui(self, message, sender, url=""):
         """Update the UI with a new message."""
@@ -463,7 +432,6 @@ class OpalApp(QMainWindow):
         self.chat_log_display.verticalScrollBar().setValue(
             self.chat_log_display.verticalScrollBar().maximum()
         )
-        # Updated func #
 
     def create_frame_format(self, sender):
         """Create the frame format for a message."""
@@ -471,18 +439,26 @@ class OpalApp(QMainWindow):
         frame_format.setPadding(5)
         frame_format.setBorder(1)
         frame_format.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
-        frame_format.setBackground(
-            QColor.fromRgb(245, 250, 255, 255)
-            if sender == "user"
-            else QColor.fromRgb(210, 230, 255, 255)
-        )
-        frame_format.setBorderBrush(
-            QColor.fromRgb(0, 0, 0, 50)
-            if sender == "user"
-            else QColor.fromRgb(0, 0, 0, 65)
-        )
+
+        if self.is_dark_mode:
+            user_bg_color = QColor.fromRgb(46, 46, 46)
+            assistant_bg_color = QColor.fromRgb(58, 58, 58)
+            user_border_color = QColor.fromRgb(68, 68, 68)
+            assistant_border_color = QColor.fromRgb(85, 85, 85)
+        else:
+            user_bg_color = QColor.fromRgb(245, 250, 255, 255)
+            assistant_bg_color = QColor.fromRgb(210, 230, 255, 255)
+            user_border_color = QColor.fromRgb(0, 0, 0, 50)
+            assistant_border_color = QColor.fromRgb(0, 0, 0, 65)
+
+        if sender == "user":
+            frame_format.setBackground(user_bg_color)
+            frame_format.setBorderBrush(user_border_color)
+        else:
+            frame_format.setBackground(assistant_bg_color)
+            frame_format.setBorderBrush(assistant_border_color)
+
         return frame_format
-        # NEW FUNC!!! #
 
     def insert_url(self, cursor, url):
         """Insert a URL into the chat log."""
@@ -496,7 +472,6 @@ class OpalApp(QMainWindow):
         cursor.insertText(" (URL: ", url_format)
         cursor.insertText(url, url_format)
         cursor.insertText(")", url_format)
-        # NEW FUNC!!! #
 
     def show_chat_context_menu(self, position):
         """Show the context menu for a chat."""
@@ -508,7 +483,6 @@ class OpalApp(QMainWindow):
         context_menu.addAction(delete_chat_action)
         delete_chat_action.triggered.connect(self.delete_current_chat)
         context_menu.exec_(self.chats_list_widget.mapToGlobal(position))
-        # NEW FUNC!!! #
 
     def delete_current_chat(self):
         """Delete the current chat."""
@@ -523,7 +497,6 @@ class OpalApp(QMainWindow):
             )
             if os.path.exists(chat_log_path):
                 os.remove(chat_log_path)
-        # Updated func #
 
     def load_chat_history(self):
         """Load chat history from files."""
@@ -539,7 +512,6 @@ class OpalApp(QMainWindow):
             except (FileNotFoundError, json.JSONDecodeError, Exception):
                 pass
         self.switch_chat("(New Chat)")
-        # Updated func #
 
     def save_chat_history(self, chat, new_message):
         """Save the chat history to a file."""
@@ -558,7 +530,6 @@ class OpalApp(QMainWindow):
                     json.dump(existing_chat_log, f)
             except Exception as e:
                 print(f"Error saving chat history: {e}")
-        # Updated func #
 
     def showEvent(self, event):
         """Override showEvent to center the window."""
@@ -568,7 +539,6 @@ class OpalApp(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
         self.chat_input.setFocus()
-        # Updated func #
 
     def closeEvent(self, event):
         """Override closeEvent to handle chat log cleanup."""
@@ -577,4 +547,3 @@ class OpalApp(QMainWindow):
             if os.path.exists(file_path):
                 os.remove(file_path)
         event.accept()
-        # Updated func #

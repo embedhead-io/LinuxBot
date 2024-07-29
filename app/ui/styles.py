@@ -39,19 +39,18 @@ QListWidget {
 }
 """
 
-
 dark_mode_stylesheet = """
 QMainWindow {
-    background-color: #1E1E1E;
+    background-color: #121212;
 }
 QTextEdit {
-    background-color: #2E2E2E;
-    color: #CCCCCC;
+    background-color: #1E1E1E;
+    color: #E0E0E0;
     border: 1px solid #444444;
     padding: 5px;
 }
 QPushButton {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4A4A4A, stop:1 #3A3A3A);
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #333333, stop:1 #222222);
     color: #CCCCCC;
     border: none;
     padding: 6px 12px;
@@ -59,7 +58,7 @@ QPushButton {
     border-radius: 5px;
 }
 QPushButton:hover {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3A3A3A, stop:1 #555555);
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #444444);
     border: 1px solid #555555;
 }
 QPushButton:pressed {
@@ -78,5 +77,17 @@ QListWidget {
     background-color: #2E2E2E;
     color: #CCCCCC;
     border: 1px solid #444444;
+}
+QTextEdit[role="user"] {
+    background-color: #2E2E2E;
+    color: #E0E0E0;
+    border: 1px solid #444444;
+    padding: 5px;
+}
+QTextEdit[role="assistant"] {
+    background-color: #2E2E2E;
+    color: #E0E0E0;
+    border: 1px solid #555555;
+    padding: 5px;
 }
 """
