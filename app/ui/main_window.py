@@ -182,9 +182,20 @@ class OpalApp(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
     def toggle_left_panel(self):
-        is_visible = self.sidebar_widget.isVisible()
-        self.sidebar_widget.setVisible(not is_visible)
-        self.toggle_button.setText(">" if is_visible else "<")
+        if self.chats_list_widget.isVisible():
+            self.chats_list_widget.hide()
+            self.model_selector.hide()
+            self.new_chat_button.hide()
+            self.rename_chat_button.hide()
+            self.delete_chat_button.hide()
+            self.toggle_button.setText(">")
+        else:
+            self.chats_list_widget.show()
+            self.model_selector.show()
+            self.new_chat_button.show()
+            self.rename_chat_button.show()
+            self.delete_chat_button.show()
+            self.toggle_button.setText("<")
 
     def adjust_main_window_width(self):
         if self.sidebar_widget.isVisible():
@@ -335,22 +346,6 @@ class OpalApp(QMainWindow):
         self.chats_list_widget.setCurrentRow(next_row)
         new_item = self.chats_list_widget.item(next_row)
         self.switch_chat(new_item.text())
-
-    def toggle_left_panel(self):
-        if self.chats_list_widget.isVisible():
-            self.chats_list_widget.hide()
-            self.model_selector.hide()
-            self.new_chat_button.hide()
-            self.rename_chat_button.hide()
-            self.delete_chat_button.hide()
-            self.toggle_button.setText(">")
-        else:
-            self.chats_list_widget.show()
-            self.model_selector.show()
-            self.new_chat_button.show()
-            self.rename_chat_button.show()
-            self.delete_chat_button.show()
-            self.toggle_button.setText("<")
 
     def adjust_input_size(self):
         doc_height = self.chat_input.document().size().toSize().height()
